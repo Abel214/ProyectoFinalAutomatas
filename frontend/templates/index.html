@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="/frontend/style/style.css">
+    <title>Portfolio Website</title>
+</head>
+<body>
+    <header>
+        <a href="#" class="logo">AUTOMATAS</a>
+
+        <nav>
+            <a href="index.html" class="active"> Inicio</a>
+            <a href="juego.html" >Juego</a>
+            <a href="#" >Documentación</a>
+            <a href="#" >Acerca De</a>
+        </nav>
+    </header>
+    <section class="home">
+        <div class="home-img">
+            <img src="/frontend/resources/main.jpg" alt="">
+        </div>
+        <div class="home-content">
+            <h3>Hola, Bienvenidos al <span>Monty Hall</span></h3>
+            <h3 class="typing-text" id="dynamic-word">Encontrarás </h3>
+            <p>Preparado pra enfrentarte a un desafio en donde tus decisiones repercutiran tu destino, ganar o morir es tu elección</p>
+            <p>Enlaces del proyecto y redes sociales</p>
+            <div class="social-icons">
+                <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+                <a href="#"><i class="fa-brands fa-github"></i></a>
+                <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="#"><i class="fa-brands fa-instagram"></i></a>
+            </div>
+            <a href="juego.html" class="btn" id="start-btn">Comenzemos</a>
+        </div>
+    </section>
+    <script>
+        const words = ["decisión", "autómata", "voz", "puertas", "destino"];
+        let i = 0;
+        const h3 = document.getElementById("dynamic-word");
+        function showWord() {
+            h3.textContent = `Encontrarás ${words[i]}`;
+            i = (i + 1) % words.length;
+        }
+        showWord();
+        setInterval(showWord, 1500);
+
+        // Transición suave al hacer clic en "Comenzemos"
+        document.getElementById('start-btn').addEventListener('click', function(event) {
+            event.preventDefault();
+            h3.textContent = '¡Suerte en el juego!';
+            document.body.style.transition = 'opacity 0.8s';
+            document.body.style.opacity = '0';
+            setTimeout(function() {
+                window.location.href = 'juego.html';
+            }, 800);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/frontend/style/style.css">
+    <link rel="stylesheet" href="/frontend/style/montyhall.css">
+
+    <title>Juego Monty Hall</title>
+   <style>
+        .monty-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .doors {
+            display: flex;
+            gap: 40px;
+            margin: 30px 0;
+        }
+        .door {
+            cursor: pointer;
+            transition: transform 0.2s;
+            height: 266px;
+            width: 133px;
+            object-fit: contain;
+        }
+        /* Botones de cambio centrados y separados */
+        .change-btns {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 18px;
+        }
+        .door.selected {
+            transform: scale(1.1);
+            border: 2px solid #007bff;
+        }
+        .door-label {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        .presenter-img {
+            width: 100px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .stats {
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+        .btn-monty {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+     <header>
+        <a href="#" class="logo">AUTOMATAS</a>
+
+        <nav>
+            <a href="index.html" class="active"> Inicio</a>
+            <a href="juego.html" >Juego</a>
+            <a href="#" >Documentación</a>
+            <a href="#" >Acerca De</a>
+        </nav>
+    </header>
+    <div class="monty-container">
+        <img src="../resources/Presentador1.jpeg" alt="Presentador" id="presenter" class="presenter-img">
+        <h2>Selecciona una puerta entre A, B y C</h2>
+        <div class="doors">
+            <div>
+                <img src="../resources/Puerta_estatica.png" alt="Puerta A" class="door" id="doorA">
+                <div class="door-label">A</div>
+            </div>
+            <div>
+                <img src="../resources/Puerta_estatica.png" alt="Puerta B" class="door" id="doorB">
+                <div class="door-label">B</div>
+            </div>
+            <div>
+                <img src="../resources/Puerta_estatica.png" alt="Puerta C" class="door" id="doorC">
+                <div class="door-label">C</div>
+            </div>
+        </div>
+        <div id="message"></div>
+        <button class="btn-monty" id="restart" style="display:none;">Jugar de nuevo</button>
+        <div class="stats" id="stats">Ganadas: 0 | Perdidas: 0 | % de victorias: 0.00%</div>
+    </div>
+    <script src="../js/montyhall.js"></script>
+</body>
+</html>
