@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../style/style.css">
-    <link rel="stylesheet" href="../style/montyhall.css">
+    <!-- Cambio: usar url_for para los CSS - SIN duplicar static/ -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/montyhall.css') }}">
 
     <title>Juego Monty Hall</title>
    <style>
@@ -71,26 +72,28 @@
         <a href="#" class="logo">AUTOMATAS</a>
 
         <nav>
-            <a href="index.html" class="active"> Inicio</a>
-            <a href="juego.html" >Juego</a>
+            <!-- Cambio: usar url_for para las rutas de navegación -->
+            <a href="{{ url_for('index') }}" class="active"> Inicio</a>
+            <a href="{{ url_for('juego') }}" >Juego</a>
             <a href="#" >Documentación</a>
             <a href="#" >Acerca De</a>
         </nav>
     </header>
     <div class="monty-container">
-        <img src="../resources/Presentador1.jpeg" alt="Presentador" id="presenter" class="presenter-img">
+        <!-- Cambio: usar url_for para las imágenes - SIN duplicar static/ -->
+        <img src="{{ url_for('static', filename='resources/Presentador1.jpeg') }}" alt="Presentador" id="presenter" class="presenter-img">
         <h2>Selecciona una puerta entre A, B y C</h2>
         <div class="doors">
             <div>
-                <img src="../resources/Puerta_estatica.png" alt="Puerta A" class="door" id="doorA">
+                <img src="{{ url_for('static', filename='resources/Puerta_estatica.png') }}" alt="Puerta A" class="door" id="doorA">
                 <div class="door-label">A</div>
             </div>
             <div>
-                <img src="../resources/Puerta_estatica.png" alt="Puerta B" class="door" id="doorB">
+                <img src="{{ url_for('static', filename='resources/Puerta_estatica.png') }}" alt="Puerta B" class="door" id="doorB">
                 <div class="door-label">B</div>
             </div>
             <div>
-                <img src="../resources/Puerta_estatica.png" alt="Puerta C" class="door" id="doorC">
+                <img src="{{ url_for('static', filename='resources/Puerta_estatica.png') }}" alt="Puerta C" class="door" id="doorC">
                 <div class="door-label">C</div>
             </div>
         </div>
@@ -98,6 +101,8 @@
         <button class="btn-monty" id="restart" style="display:none;">Jugar de nuevo</button>
         <div class="stats" id="stats">Ganadas: 0 | Perdidas: 0 | % de victorias: 0.00%</div>
     </div>
-    <script src="../js/montyhall.js"></script>
+    <!-- Cambio: usar url_for para el JavaScript - SIN duplicar static/ -->
+    <script src="{{ url_for('static', filename='js/montyhall.js') }}"></script>
+
 </body>
 </html>

@@ -1,0 +1,32 @@
+/* Botones de cambio centrados y separados */
+.change-btns {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 18px;
+}
+.txt-puerta {
+    font-size: 2.1em;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 10px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+.btn-white {
+    background: #fff !important;
+    color: #111 !important;
+    border: 2px solid #111 !important;
+    font-size: 1.3em !important;
+    font-weight: bold;
+    min-width: 170px;
+    min-height: 55px;
+    margin: 0 15px;
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-white:hover {
+    background: #f0f0f0 !important;
+    color: #007bff !important;
+    border-color: #007bff !important;
+}
