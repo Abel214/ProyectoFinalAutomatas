@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>� Árbol de Reconocimiento de Voz - GLC</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .info-section {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .status-valid {
+            border-left-color: #28a745;
+            background: linear-gradient(45deg, #d4edda, #c3e6cb);
+        }
+
+        .status-invalid {
+            border-left-color: #dc3545;
+            background: linear-gradient(45deg, #f8d7da, #f5c6cb);
+        }
+
+        #mynetwork {
+            width: 100%;
+            height: 600px;
+            background: #ffffff;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+
+        .network-container {
+            padding: 30px;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 600px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px;
+            border: 1px solid #f5c6cb;
+            text-align: center;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .grammar-info {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            border: 1px solid #e9ecef;
+        }
+
+        .grammar-info h3 {
+            color: #667eea;
+            margin-top: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .network-status {
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>� Árbol de Reconocimiento de Voz</h1>
+            <p>Analizador GLC para Comandos de Voz del Laberinto y Monty Hall</p>
+        </div>
+
+       <div class="info-section">
+            <div class="info-card">
+                <h3>📋 Información del Análisis</h3>
+                <p><strong>Estado:</strong> <span id="analisis-status">Cargando...</span></p>
+                <p>
+                    <strong>Validez:</strong>
+                    <span id="validez-msg">
+                        {{ mensaje_validez|safe }}
+                    </span>
+                </p>
+                <p><strong>Gramática utilizada:</strong> GLC para Reconocimiento de Voz</p>
+                <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
+            </div>
+
+            <div class="grammar-info">
+                <h3>🎯 Gramática de Comandos de Voz</h3>
+                <div>
+                    <strong>Comandos de Movimiento:</strong><br>
+                    S → comando | ε<br>
+                    comando → movimiento | monty | juego<br>
+                    movimiento → "izquierda" | "derecha" | "arriba" | "abajo"<br><br>
+                    
+                    <strong>Comandos Monty Hall:</strong><br>
+                    monty → puerta | accion | control<br>
+                    puerta → puerta_a | puerta_b | puerta_c<br>
+                    puerta_a → "puerta" "a"<br>
+                    puerta_b → "puerta" "b"<br>
+                    puerta_c → "puerta" "c"<br>
+                    accion → "cambiar" | "mantener"<br>
+                    control → "cerrar" | "reiniciar" | "otra" "vez"<br><br>
+                    
+                    <strong>Comandos del Juego:</strong><br>
+                    juego → nueva<br>
+                    nueva → "nueva" "partida"<br>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>🗣️ Comandos Reconocidos</h3>
+                <p><strong>Movimiento:</strong> izquierda, derecha, arriba, abajo</p>
+                <p><strong>Monty Hall:</strong> puerta a/b/c, cambiar, mantener, cerrar, reiniciar, otra vez</p>
+                <p><strong>Juego:</strong> nueva partida</p>
+            </div>
+        </div>
+
+        <div class="network-container">
+            <h2 style="text-align: center; color: #667eea;">🎯 Visualización del Árbol de Comandos</h2>
+            <div class="network-status" id="network-status">
+                Árbol de reconocimiento de voz cargado
+            </div>
+            <div id="mynetworkid" style="width: 100%; height: 600px; background: #ffffff; border: 1px solid #ddd;"></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="location.reload()">🔄 Recargar</button>
+            <button class="btn" onclick="window.close()">❌ Cerrar</button>
+            <button class="btn" onclick="exportarArbol()">💾 Exportar</button>
+            <button class="btn" onclick="mostrarEstadisticas()">📊 Estadísticas</button>
+        </div>
+    </div>
+
+    <!-- Cargar el archivo JavaScript del árbol de voz -->
+    <script src="{{ url_for('static', filename='js/arbolVoz.js') }}"></script>
+    
+    <script>
+        // Establecer timestamp
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        
+        // Actualizar estado del análisis
+        document.getElementById('analisis-status').textContent = 'Análisis completado';
+        document.getElementById('analisis-status').style.color = '#28a745';
+        
+        // Mensaje de éxito
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.getElementById('network-status').style.background = 'linear-gradient(45deg, #d4edda, #c3e6cb)';
+                document.getElementById('network-status').style.color = '#155724';
+                document.getElementById('network-status').style.borderLeft = '4px solid #28a745';
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
+                manejarError(mensaje || 'Error al crear la visualización');
+            }
+        };
+    </script>
+</body>
+</html>
