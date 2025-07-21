@@ -5,9 +5,10 @@ Integración de GLC para Reconocimiento de Voz con el proyecto principal
 Proyecto Final - Autómatas y Lenguajes Formales
 """
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 import sys
 import os
+from datetime import datetime
 
 # Añadir el directorio backend al path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend', 'glc'))
@@ -27,22 +28,44 @@ def integrar_rutas_glc(app):
         app: Instancia de Flask
     """
     
-    @app.route('/glc')
-    def glc_index():
-        """Página principal del analizador GLC"""
-        return render_template('glc/index.html')
+    # Inicializar historial de comandos en la sesión
+    def inicializar_historial():
+        if 'historial_comandos' not in session:
+            session['historial_comandos'] = []
+        if 'ultimo_comando' not in session:
+            session['ultimo_comando'] = None
     
     @app.route('/glc/arbol')
     def mostrar_arbol_voz():
-        """Muestra el árbol de reconocimiento de voz"""
+        """Muestra el árbol de reconocimiento de voz con el último comando"""
+        inicializar_historial()
+        
+        # Obtener último comando o usar ejemplo por defecto
+        ultimo_comando = session.get('ultimo_comando', 'puerta a')
+        historial = session.get('historial_comandos', [])
+        
         return render_template('glc/arbol.html', 
-                             mensaje_validez="Árbol de ejemplo cargado",
+                             mensaje_validez="",
+                             ultimo_comando=ultimo_comando,
+                             historial_comandos=historial,
+                             total_comandos=len(historial),
+                             reglas_usadas=[])
+    
+    @app.route('/glc/arbol/<comando>')
+    def mostrar_arbol_comando_especifico(comando):
+        """Muestra el árbol para un comando específico"""
+        return render_template('glc/arbol.html', 
+                             mensaje_validez="",
+                             ultimo_comando=comando,
+                             historial_comandos=session.get('historial_comandos', []),
+                             total_comandos=len(session.get('historial_comandos', [])),
                              reglas_usadas=[])
     
     @app.route('/glc/analizar', methods=['POST'])
     def analizar_comando_voz():
         """
         Analiza un comando de voz y devuelve el resultado
+        También guarda el comando en el historial de la sesión
         """
         if not AnalizadorGramaticaVisual:
             return jsonify({
@@ -51,6 +74,7 @@ def integrar_rutas_glc(app):
             }), 500
             
         try:
+            inicializar_historial()
             datos = request.get_json()
             comando = datos.get('comando', '').strip().lower()
             
@@ -70,13 +94,39 @@ def integrar_rutas_glc(app):
             # Generar derivación
             analizador.generar_proceso_desde_arbol()
             
+            es_valido = analizador.es_valido()
+            
+            # Guardar en historial TODOS los comandos (válidos e inválidos)
+            historial = session.get('historial_comandos', [])
+            
+            # Agregar comando con timestamp
+            entrada_historial = {
+                'comando': comando,
+                'timestamp': datetime.now().strftime('%H:%M:%S'),
+                'derivacion': analizador.proceso_arbol if es_valido else [],
+                'tokens': analizador.tokens if es_valido else comando.split(' '),
+                'reglas_usadas': analizador.reglas_usadas if es_valido else [],
+                'valido': es_valido
+            }
+            
+            historial.append(entrada_historial)
+            
+            # Mantener solo los últimos 20 comandos
+            if len(historial) > 20:
+                historial = historial[-20:]
+            
+            session['historial_comandos'] = historial
+            session['ultimo_comando'] = comando
+            session.permanent = True
+            
             resultado = {
                 'comando': comando,
-                'valido': analizador.es_valido(),
+                'valido': es_valido,
                 'tokens': analizador.tokens,
                 'derivacion': analizador.proceso_arbol,
                 'reglas_usadas': analizador.reglas_usadas,
-                'arbol': analizador.arbol
+                'arbol': analizador.arbol,
+                'total_comandos_sesion': len(session.get('historial_comandos', []))
             }
             
             return jsonify(resultado)
@@ -86,6 +136,23 @@ def integrar_rutas_glc(app):
                 'error': f'Error al procesar comando: {str(e)}',
                 'valido': False
             }), 500
+    
+    @app.route('/glc/historial')
+    def obtener_historial():
+        """Obtiene el historial de comandos de la sesión"""
+        inicializar_historial()
+        return jsonify({
+            'historial': session.get('historial_comandos', []),
+            'ultimo_comando': session.get('ultimo_comando', None),
+            'total': len(session.get('historial_comandos', []))
+        })
+    
+    @app.route('/glc/limpiar_historial', methods=['POST'])
+    def limpiar_historial():
+        """Limpia el historial de comandos"""
+        session['historial_comandos'] = []
+        session['ultimo_comando'] = None
+        return jsonify({'mensaje': 'Historial limpiado', 'exito': True})
     
     @app.route('/glc/comandos')
     def listar_comandos():

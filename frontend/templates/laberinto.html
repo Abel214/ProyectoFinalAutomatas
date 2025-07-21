@@ -250,6 +250,11 @@
                 .trim()
                 .toLowerCase();
 
+              // Enviar comando al sistema GLC para análisis y registro
+              if (typeof enviarComandoGLC === 'function') {
+                enviarComandoGLC(transcript);
+              }
+
               // Si el modal Monty Hall está activo
               if (
                 document.getElementById("monty-modal").style.display === "flex"
@@ -397,5 +402,7 @@
         }
       }
     </script>
+    <!-- Integración con sistema GLC -->
+    <script src="{{ url_for('static', filename='js/integracionGLCVoz.js') }}"></script>
   </body>
 </html>

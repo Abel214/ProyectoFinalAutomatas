@@ -11,6 +11,7 @@ app = Flask(__name__,
 
 # Configuración básica
 app.config['SECRET_KEY'] = 'tu-clave-secreta-aqui'
+app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutos
 
 # Ruta principal - conecta con index.html
 @app.route('/')

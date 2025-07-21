@@ -174,14 +174,10 @@
        <div class="info-section">
             <div class="info-card">
                 <h3>📋 Información del Análisis</h3>
-                <p><strong>Estado:</strong> <span id="analisis-status">Cargando...</span></p>
-                <p>
-                    <strong>Validez:</strong>
-                    <span id="validez-msg">
-                        {{ mensaje_validez|safe }}
-                    </span>
-                </p>
+                <p><strong>Comando analizado:</strong> <span id="comando-actual">{{ ultimo_comando or 'puerta a' }}</span></p>
+                <p><strong>Estado:</strong> <span style="color: #28a745; font-weight: bold;">✅ Analizando comandos de voz</span></p>
                 <p><strong>Gramática utilizada:</strong> GLC para Reconocimiento de Voz</p>
+                <p><strong>Comandos en sesión:</strong> <span id="total-comandos">{{ total_comandos or 0 }}</span></p>
                 <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
             </div>
 
@@ -217,9 +213,9 @@
         </div>
 
         <div class="network-container">
-            <h2 style="text-align: center; color: #667eea;">🎯 Visualización del Árbol de Comandos</h2>
+            <h2 style="text-align: center; color: #667eea;">🎯 Árbol Dinámico de Comandos</h2>
             <div class="network-status" id="network-status">
-                Árbol de reconocimiento de voz cargado
+                🎯 Comando: "{{ ultimo_comando or 'puerta a' }}" | 📊 Total: {{ total_comandos or 0 }}
             </div>
             <div id="mynetworkid" style="width: 100%; height: 600px; background: #ffffff; border: 1px solid #ddd;"></div>
         </div>
@@ -229,22 +225,32 @@
             <button class="btn" onclick="window.close()">❌ Cerrar</button>
             <button class="btn" onclick="exportarArbol()">💾 Exportar</button>
             <button class="btn" onclick="mostrarEstadisticas()">📊 Estadísticas</button>
+            <button class="btn" onclick="mostrarSelectorHistorial()">📝 Historial</button>
         </div>
     </div>
 
-    <!-- Cargar el archivo JavaScript del árbol de voz -->
-    <script src="{{ url_for('static', filename='js/arbolVoz.js') }}"></script>
+    <!-- Cargar el archivo JavaScript dinámico -->
+    <script src="{{ url_for('static', filename='js/arbolVozDinamico.js') }}"></script>
     
     <script>
         // Establecer timestamp
         document.getElementById('timestamp').textContent = new Date().toLocaleString();
         
-        // Actualizar estado del análisis
-        document.getElementById('analisis-status').textContent = 'Análisis completado';
-        document.getElementById('analisis-status').style.color = '#28a745';
+        // Datos del servidor
+        const ultimoComando = '{{ ultimo_comando or "puerta a" }}';
+        const historialComandos = {{ historial_comandos|tojson|safe }};
+        const totalComandos = {{ total_comandos or 0 }};
         
-        // Mensaje de éxito
+        // Inicializar árbol dinámico cuando cargue la página
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🌳 Inicializando árbol dinámico...');
+            console.log('📝 Último comando:', ultimoComando);
+            console.log('📊 Historial:', historialComandos);
+            
+            // Inicializar el árbol dinámico
+            arbolDinamico.inicializar(ultimoComando, historialComandos);
+            
+            // Actualizar estado
             setTimeout(() => {
                 document.getElementById('network-status').style.background = 'linear-gradient(45deg, #d4edda, #c3e6cb)';
                 document.getElementById('network-status').style.color = '#155724';
