@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test de Comandos</title>
+</head>
+<body>
+    <h1>Test de Reconocimiento de Comandos</h1>
+    <div id="resultados"></div>
+    
+    <script>
+        // Crear una instancia simple para probar
+        class TestComandos {
+            determinarTipoComando(comando) {
+                const comandoLower = comando.toLowerCase().trim();
+                console.log(`🔍 Determinando tipo para: "${comandoLower}"`);
+                
+                // Comandos de movimiento
+                if (['izquierda', 'derecha', 'arriba', 'abajo'].includes(comandoLower)) {
+                    console.log(`✅ Reconocido como movimiento: ${comandoLower}`);
+                    return 'movimiento';
+                }
+                
+                // Comandos Monty Hall - puertas
+                if (comandoLower.startsWith('puerta') || 
+                    comandoLower.includes('puerta a') || 
+                    comandoLower.includes('puerta b') || 
+                    comandoLower.includes('puerta c')) {
+                    console.log(`✅ Reconocido como monty (puerta): ${comandoLower}`);
+                    return 'monty';
+                }
+                
+                // Comandos Monty Hall - acciones
+                if (['cambiar', 'mantener'].includes(comandoLower)) {
+                    console.log(`✅ Reconocido como monty (acción): ${comandoLower}`);
+                    return 'monty';
+                }
+                
+                // Comandos Monty Hall - control
+                if (['cerrar', 'reiniciar'].includes(comandoLower) || 
+                    comandoLower.includes('otra vez')) {
+                    console.log(`✅ Reconocido como monty (control): ${comandoLower}`);
+                    return 'monty';
+                }
+                
+                // Comandos del juego
+                if (comandoLower.includes('nueva partida') || comandoLower === 'nueva') {
+                    console.log(`✅ Reconocido como juego: ${comandoLower}`);
+                    return 'juego';
+                }
+                
+                console.log(`⚠️ Comando no reconocido: "${comando}" (procesado como: "${comandoLower}")`);
+                return 'comando_desconocido';
+            }
+        }
+        
+        const tester = new TestComandos();
+        const comandosPrueba = [
+            'derecha', 'izquierda', 'arriba', 'abajo',
+            'puerta a', 'puerta b', 'puerta c',
+            'cambiar', 'mantener',
+            'cerrar', 'reiniciar', 'otra vez',
+            'nueva partida', 'nueva',
+            'comando invalido'
+        ];
+        
+        console.log('🧪 === INICIANDO PRUEBAS DE COMANDOS ===');
+        comandosPrueba.forEach(cmd => {
+            const tipo = tester.determinarTipoComando(cmd);
+            console.log(`Comando: "${cmd}" -> Tipo: ${tipo}`);
+        });
+        console.log('🧪 === FIN DE PRUEBAS ===');
+    </script>
+</body>
+</html>

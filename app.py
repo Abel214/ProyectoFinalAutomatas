@@ -1,6 +1,9 @@
 from flask import Flask, render_template
 import os
 
+# Importar la integración GLC
+from integracion_glc import integrar_rutas_glc
+
 # Crear la aplicación Flask con rutas personalizadas
 app = Flask(__name__,
             template_folder='frontend/templates',  # Especifica la carpeta de templates
@@ -8,6 +11,7 @@ app = Flask(__name__,
 
 # Configuración básica
 app.config['SECRET_KEY'] = 'tu-clave-secreta-aqui'
+app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutos
 
 # Ruta principal - conecta con index.html
 @app.route('/')
@@ -20,6 +24,9 @@ def laberinto():
     return render_template('laberintoMonty.html')
 
 # Ejemplo de ruta con datos dinámicos
+
+# Integrar las rutas de GLC
+integrar_rutas_glc(app)
 
 
 # Manejo de errores 404
