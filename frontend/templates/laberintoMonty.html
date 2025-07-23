@@ -131,6 +131,14 @@
         >
             🤖 Ver Autómata
         </button>
+        <button 
+            id="test-monty" 
+            class="btn-monty" 
+            style="background: #e74c3c; margin-left: 10px;"
+            onclick="testMontyHall()"
+        >
+            🧪 Probar Monty Hall
+        </button>
         
         <!-- Panel de estado del autómata -->
         <div id="automata-status-panel" style="
@@ -317,6 +325,26 @@
             if (e.key === "ArrowDown") moveParticle(0, 1);
             if (e.key === "ArrowLeft") moveParticle(-1, 0);
             if (e.key === "ArrowRight") moveParticle(1, 0);
+            
+            // 🧪 Atajos para pruebas (solo para debugging)
+            if (e.key === "m" || e.key === "M") {
+                console.log('🧪 Atajo M presionado - Abriendo Monty Hall de prueba');
+                testMontyHall();
+            }
+            
+            // Atajos para comandos de voz cuando Monty Hall está activo
+            if (document.getElementById("monty-modal").style.display === "flex") {
+                if (e.key === "1") {
+                    console.log('🧪 Atajo 1 - Simulando "puerta a"');
+                    simularComandoVoz("puerta a");
+                } else if (e.key === "2") {
+                    console.log('🧪 Atajo 2 - Simulando "puerta b"');
+                    simularComandoVoz("puerta b");
+                } else if (e.key === "3") {
+                    console.log('🧪 Atajo 3 - Simulando "puerta c"');
+                    simularComandoVoz("puerta c");
+                }
+            }
         });
 
         // Botón nueva partida
@@ -354,6 +382,13 @@
                 'b': true,
                 'c': true,
                 
+                // Variaciones comunes de letras (reconocimiento de voz)
+                'hay': true,  // A veces reconoce "a" como "hay"
+                'eh': true,   // A veces reconoce "a" como "eh"
+                'be': true,   // A veces reconoce "b" como "be"
+                'ce': true,   // A veces reconoce "c" como "ce"
+                'se': true,   // A veces reconoce "c" como "se"
+                
                 // Comandos Monty Hall - Acciones
                 'cambiar': true,
                 'mantener': true,
@@ -373,37 +408,52 @@
             function esComandoValido(transcript) {
                 const palabras = transcript.toLowerCase().trim().split(/\s+/);
                 
+                console.log(`🔍 Validando comando: "${transcript}"`);
+                console.log(`🔍 Palabras extraídas:`, palabras);
+                console.log(`🔍 Número de palabras:`, palabras.length);
+                
                 // Verificar que todas las palabras estén en el diccionario
                 for (const palabra of palabras) {
                     if (!PALABRAS_VALIDAS[palabra]) {
+                        console.log(`❌ Palabra "${palabra}" NO está en el diccionario`);
                         return false;
+                    } else {
+                        console.log(`✅ Palabra "${palabra}" SÍ está en el diccionario`);
                     }
                 }
 
                 // Verificar patrones específicos de la gramática
                 const texto = palabras.join(' ');
+                console.log(`🔍 Texto unificado: "${texto}"`);
                 
                 // Comandos de movimiento (palabras individuales)
                 if (palabras.length === 1) {
-                    return ['izquierda', 'derecha', 'arriba', 'abajo', 'cambiar', 'mantener', 'cerrar', 'reiniciar'].includes(palabras[0]);
+                    const esValido = ['izquierda', 'derecha', 'arriba', 'abajo', 'cambiar', 'mantener', 'cerrar', 'reiniciar'].includes(palabras[0]);
+                    console.log(`🔍 Comando de una palabra: "${palabras[0]}" - Válido: ${esValido}`);
+                    return esValido;
                 }
                 
                 // Comandos de dos palabras
                 if (palabras.length === 2) {
-                    // Patrón "puerta X"
-                    if (palabras[0] === 'puerta' && ['a', 'b', 'c'].includes(palabras[1])) {
+                    // Patrón "puerta X" - Más flexible con variaciones
+                    if (palabras[0] === 'puerta' && ['a', 'b', 'c', 'hay', 'eh', 'be', 'ce', 'se'].includes(palabras[1])) {
+                        console.log(`✅ Comando puerta válido: "${texto}"`);
                         return true;
                     }
                     // Patrón "otra vez"
                     if (palabras[0] === 'otra' && palabras[1] === 'vez') {
+                        console.log(`✅ Comando "otra vez" válido: "${texto}"`);
                         return true;
                     }
                     // Patrón "nueva partida"
                     if (palabras[0] === 'nueva' && palabras[1] === 'partida') {
+                        console.log(`✅ Comando "nueva partida" válido: "${texto}"`);
                         return true;
                     }
+                    console.log(`❌ Comando de dos palabras no reconocido: "${texto}"`);
                 }
                 
+                console.log(`❌ Comando no válido: "${transcript}" (${palabras.length} palabras)`);
                 return false;
             }
 
@@ -411,34 +461,50 @@
             function normalizarComando(transcript) {
                 let comando = transcript.toLowerCase().trim();
                 
-                // Correcciones comunes de reconocimiento de voz
+                // 🔧 LIMPIEZA GENERAL: Eliminar puntuación y caracteres especiales
+                comando = comando.replace(/[.,;:!?¿¡\-_]/g, ' '); // Reemplazar puntuación por espacios
+                comando = comando.replace(/\s+/g, ' ').trim(); // Limpiar espacios múltiples
+                
+                // Correcciones específicas de reconocimiento de voz
                 const correcciones = {
                     'ezquierda': 'izquierda',
                     'isquierda': 'izquierda',
-                    'derecha.': 'derecha',
-                    'arriba.': 'arriba',
-                    'abajo.': 'abajo',
+                    'derecha': 'derecha',
+                    'arriba': 'arriba',
+                    'abajo': 'abajo',
                     'puerto a': 'puerta a',
                     'puerto b': 'puerta b',
                     'puerto c': 'puerta c',
-                    'puerta.': 'puerta',
-                    'cambiar.': 'cambiar',
-                    'mantener.': 'mantener',
-                    'reiniciar.': 'reiniciar',
-                    'cerrar.': 'cerrar',
-                    'partida.': 'partida',
-                    'nueva.': 'nueva'
+                    'puerta': 'puerta',
+                    'cambiar': 'cambiar',
+                    'mantener': 'mantener',
+                    'reiniciar': 'reiniciar',
+                    'cerrar': 'cerrar',
+                    'partida': 'partida',
+                    'nueva': 'nueva',
+                    // Variaciones comunes de "puerta"
+                    'puert a': 'puerta a',
+                    'puert b': 'puerta b',
+                    'puert c': 'puerta c',
+                    // Letras individuales que podrían confundirse
+                    'hay': 'a',
+                    'eh': 'a',
+                    'be': 'b',
+                    'ce': 'c',
+                    'se': 'c'
                 };
                 
-                // Aplicar correcciones
+                // Aplicar correcciones palabra por palabra y luego al texto completo
+                let palabras = comando.split(' ');
+                palabras = palabras.map(palabra => correcciones[palabra] || palabra);
+                comando = palabras.join(' ');
+                
+                // Aplicar correcciones al texto completo
                 for (const [incorrecto, correcto] of Object.entries(correcciones)) {
-                    comando = comando.replace(incorrecto, correcto);
+                    comando = comando.replace(new RegExp(incorrecto, 'gi'), correcto);
                 }
                 
-                // Limpiar espacios extra
-                comando = comando.replace(/\s+/g, ' ').trim();
-                
-                return comando;
+                return comando.trim();
             }
 
             // Función para dar retroalimentación sobre comandos no reconocidos
@@ -511,21 +577,75 @@
                         if (
                             document.getElementById("monty-modal").style.display === "flex"
                         ) {
+                            console.log(`🚪 Monty Hall activo - Procesando comando: "${transcript}"`);
+                            console.log('🎯 Estado montyVoice:', window.montyVoice);
+                            
                             // Comandos específicos de Monty Hall
-                            if (transcript === "puerta a")
-                                window.montyVoice.selectDoor && window.montyVoice.selectDoor(0);
-                            else if (transcript === "puerta b")
-                                window.montyVoice.selectDoor && window.montyVoice.selectDoor(1);
-                            else if (transcript === "puerta c")
-                                window.montyVoice.selectDoor && window.montyVoice.selectDoor(2);
-                            else if (transcript === "cambiar")
-                                window.montyVoice.selectAction && window.montyVoice.selectAction(true);
-                            else if (transcript === "mantener")
-                                window.montyVoice.selectAction && window.montyVoice.selectAction(false);
-                            else if (transcript === "cerrar")
-                                window.montyVoice.closeModal && window.montyVoice.closeModal();
-                            else if (transcript === "reiniciar" || transcript === "otra vez")
-                                window.montyVoice.restartGame && window.montyVoice.restartGame();
+                            if (transcript === "puerta a" || transcript === "puerta hay" || transcript === "puerta eh") {
+                                console.log('🚪 Comando: puerta a (o variación) - Ejecutando selectDoor(0)');
+                                if (window.montyVoice && window.montyVoice.selectDoor) {
+                                    window.montyVoice.selectDoor(0);
+                                    document.getElementById("status").textContent = "🚪 Seleccionando Puerta A";
+                                } else {
+                                    console.error('❌ montyVoice.selectDoor no está disponible');
+                                }
+                            }
+                            else if (transcript === "puerta b" || transcript === "puerta be") {
+                                console.log('🚪 Comando: puerta b (o variación) - Ejecutando selectDoor(1)');
+                                if (window.montyVoice && window.montyVoice.selectDoor) {
+                                    window.montyVoice.selectDoor(1);
+                                    document.getElementById("status").textContent = "🚪 Seleccionando Puerta B";
+                                } else {
+                                    console.error('❌ montyVoice.selectDoor no está disponible');
+                                }
+                            }
+                            else if (transcript === "puerta c" || transcript === "puerta ce" || transcript === "puerta se") {
+                                console.log('🚪 Comando: puerta c (o variación) - Ejecutando selectDoor(2)');
+                                if (window.montyVoice && window.montyVoice.selectDoor) {
+                                    window.montyVoice.selectDoor(2);
+                                    document.getElementById("status").textContent = "🚪 Seleccionando Puerta C";
+                                } else {
+                                    console.error('❌ montyVoice.selectDoor no está disponible');
+                                }
+                            }
+                            else if (transcript === "cambiar") {
+                                console.log('🔄 Comando: cambiar - Ejecutando selectAction(true)');
+                                if (window.montyVoice && window.montyVoice.selectAction) {
+                                    window.montyVoice.selectAction(true);
+                                    document.getElementById("status").textContent = "🔄 Cambiando puerta";
+                                } else {
+                                    console.error('❌ montyVoice.selectAction no está disponible');
+                                }
+                            }
+                            else if (transcript === "mantener") {
+                                console.log('✋ Comando: mantener - Ejecutando selectAction(false)');
+                                if (window.montyVoice && window.montyVoice.selectAction) {
+                                    window.montyVoice.selectAction(false);
+                                    document.getElementById("status").textContent = "✋ Manteniendo puerta";
+                                } else {
+                                    console.error('❌ montyVoice.selectAction no está disponible');
+                                }
+                            }
+                            else if (transcript === "cerrar") {
+                                console.log('❌ Comando: cerrar - Ejecutando closeModal()');
+                                if (window.montyVoice && window.montyVoice.closeModal) {
+                                    window.montyVoice.closeModal();
+                                } else {
+                                    console.error('❌ montyVoice.closeModal no está disponible');
+                                }
+                            }
+                            else if (transcript === "reiniciar" || transcript === "otra vez") {
+                                console.log('🔄 Comando: reiniciar/otra vez - Ejecutando restartGame()');
+                                if (window.montyVoice && window.montyVoice.restartGame) {
+                                    window.montyVoice.restartGame();
+                                } else {
+                                    console.error('❌ montyVoice.restartGame no está disponible');
+                                }
+                            }
+                            else {
+                                console.log(`❓ Comando no reconocido en Monty Hall: "${transcript}"`);
+                                document.getElementById("status").textContent = `❓ Comando "${transcript}" no aplicable en Monty Hall`;
+                            }
                         } else {
                             // Comandos de movimiento normales (solo en modo laberinto)
                             if (transcript === "izquierda") moveParticle(-1, 0);
@@ -559,6 +679,53 @@
             recognition.start();
             document.getElementById("status").textContent =
                 '🎤 Reconocimiento de voz activo - Solo comandos válidos:\n' + mostrarComandosValidos();
+
+            // 🧪 FUNCIÓN DE PRUEBA - Para testing en consola
+            window.testearComando = function(comando) {
+                console.log(`\n🧪 === PRUEBA DE COMANDO ===`);
+                console.log(`📝 Comando a probar: "${comando}"`);
+                
+                const comandoNormalizado = normalizarComando(comando);
+                console.log(`🔧 Comando normalizado: "${comandoNormalizado}"`);
+                
+                const esValido = esComandoValido(comandoNormalizado);
+                console.log(`🎯 Resultado: ${esValido ? '✅ VÁLIDO' : '❌ INVÁLIDO'}`);
+                
+                if (esValido) {
+                    console.log(`💡 Este comando sería procesado por el sistema`);
+                } else {
+                    console.log(`💡 Este comando sería rechazado por el filtro`);
+                }
+                console.log(`🧪 === FIN PRUEBA ===\n`);
+                
+                return esValido;
+            };
+
+            // 🧪 FUNCIÓN DE PRUEBA MASIVA
+            window.probarTodosLosComandos = function() {
+                const comandosPrueba = [
+                    'puerta a', 'puerta b', 'puerta c',
+                    'puerta hay', 'puerta be', 'puerta ce', // Variaciones
+                    'cambiar', 'mantener',
+                    'izquierda', 'derecha', 'arriba', 'abajo',
+                    'izquierda.', 'derecha.', // Con puntuación
+                    'cerrar', 'reiniciar', 'otra vez',
+                    'nueva partida'
+                ];
+                
+                console.log(`\n🧪 === PRUEBA MASIVA DE COMANDOS ===`);
+                comandosPrueba.forEach(cmd => {
+                    const resultado = window.testearComando(cmd);
+                    console.log(`${resultado ? '✅' : '❌'} "${cmd}"`);
+                });
+                console.log(`🧪 === FIN PRUEBA MASIVA ===\n`);
+            };
+
+            console.log(`
+🧪 FUNCIONES DE PRUEBA DISPONIBLES:
+• testearComando("puerta a") - Prueba un comando específico
+• probarTodosLosComandos() - Prueba todos los comandos válidos
+            `);
         } else {
             document.getElementById("status").textContent =
                 "❌ Reconocimiento de voz no soportado en este navegador.";
@@ -567,6 +734,78 @@
         // Inicializar el juego
         findStart();
         renderMaze();
+
+        // 🧪 FUNCIÓN DE PRUEBA PARA MONTY HALL
+        function testMontyHall() {
+            console.log('🧪 Iniciando prueba de Monty Hall...');
+            showMontyHall(function (ganaste) {
+                console.log(`🎮 Resultado del juego: ${ganaste ? 'GANASTE' : 'PERDISTE'}`);
+                document.getElementById("status").textContent = 
+                    ganaste ? "🎉 ¡Ganaste en la prueba!" : "😔 Perdiste en la prueba";
+            });
+        }
+
+        // 🧪 FUNCIÓN PARA SIMULAR COMANDOS DE VOZ
+        window.simularComandoVoz = function(comando) {
+            console.log(`🎤 Simulando comando de voz: "${comando}"`);
+            
+            // Crear evento sintético como si fuera reconocimiento de voz
+            const transcript = normalizarComando(comando);
+            
+            if (!esComandoValido(transcript)) {
+                console.error(`❌ Comando "${comando}" no es válido`);
+                return false;
+            }
+            
+            console.log(`✅ Comando "${transcript}" es válido, procesando...`);
+            
+            // Si Monty Hall está activo
+            if (document.getElementById("monty-modal").style.display === "flex") {
+                console.log(`🚪 Modal Monty Hall activo, ejecutando comando...`);
+                
+                if (transcript === "puerta a" || transcript === "puerta hay" || transcript === "puerta eh") {
+                    console.log('🚪 Ejecutando: puerta a (o variación)');
+                    if (window.montyVoice && window.montyVoice.selectDoor) {
+                        window.montyVoice.selectDoor(0);
+                        return true;
+                    }
+                } else if (transcript === "puerta b" || transcript === "puerta be") {
+                    console.log('🚪 Ejecutando: puerta b (o variación)');
+                    if (window.montyVoice && window.montyVoice.selectDoor) {
+                        window.montyVoice.selectDoor(1);
+                        return true;
+                    }
+                } else if (transcript === "puerta c" || transcript === "puerta ce" || transcript === "puerta se") {
+                    console.log('🚪 Ejecutando: puerta c (o variación)');
+                    if (window.montyVoice && window.montyVoice.selectDoor) {
+                        window.montyVoice.selectDoor(2);
+                        return true;
+                    }
+                } else if (transcript === "cambiar") {
+                    console.log('🔄 Ejecutando: cambiar');
+                    if (window.montyVoice && window.montyVoice.selectAction) {
+                        window.montyVoice.selectAction(true);
+                        return true;
+                    }
+                } else if (transcript === "mantener") {
+                    console.log('✋ Ejecutando: mantener');
+                    if (window.montyVoice && window.montyVoice.selectAction) {
+                        window.montyVoice.selectAction(false);
+                        return true;
+                    }
+                }
+            } else {
+                console.log('❌ Modal Monty Hall no está activo');
+            }
+            
+            return false;
+        };
+
+        console.log(`
+🧪 FUNCIONES DE PRUEBA ADICIONALES:
+• testMontyHall() - Abre el modal de Monty Hall para pruebas
+• simularComandoVoz("puerta a") - Simula un comando de voz
+        `);
     </script>
     <!-- Integración con sistema GLC -->
     <script src="{{ url_for('static', filename='js/integracionGLCVoz.js') }}"></script>

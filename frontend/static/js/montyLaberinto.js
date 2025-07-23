@@ -21,6 +21,7 @@ let montyHallGame = {
 
 // Función principal para mostrar el modal de Monty Hall
 function showMontyHall(callback) {
+    console.log('🎮 === INICIANDO MONTY HALL ===');
     const modal = document.getElementById("monty-modal");
 
     // Limpiar modal anterior y crear estructura nueva
@@ -46,7 +47,13 @@ function showMontyHall(callback) {
             <!-- Mensaje principal -->
             <div id="monty-message" style="margin: 20px 0; min-height: 60px; font-size: 1.1em;">
                 <div class="txt-puerta" style="color: #333; font-weight: bold;">
-                    Selecciona una puerta.
+                    Selecciona una puerta diciendo "puerta a", "puerta b" o "puerta c"
+                </div>
+                <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                    🧪 Prueba: 
+                    <button onclick="window.montyVoice?.selectDoor(0)" style="margin: 2px; padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer;">Test A</button>
+                    <button onclick="window.montyVoice?.selectDoor(1)" style="margin: 2px; padding: 5px 10px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Test B</button>
+                    <button onclick="window.montyVoice?.selectDoor(2)" style="margin: 2px; padding: 5px 10px; background: #FF9800; color: white; border: none; border-radius: 3px; cursor: pointer;">Test C</button>
                 </div>
             </div>
             
@@ -99,18 +106,23 @@ function showMontyHall(callback) {
 
     // Mostrar modal
     modal.style.display = "flex";
+    console.log('🎮 Modal mostrado, display:', modal.style.display);
 
     // Inicializar juego
     inicializarMontyHall(callback);
+    console.log('🎮 Juego inicializado');
 
     // Configurar controles de voz
     configurarVozMontyHall();
+    console.log('🎮 Controles de voz configurados');
 
     // Crear puertas con imágenes
     crearPuertasConImagenes();
+    console.log('🎮 Puertas creadas');
 
     // Actualizar estadísticas
     actualizarStats();
+    console.log('🎮 === MONTY HALL LISTO ===');
 }
 
 // Inicializar el juego Monty Hall
@@ -177,13 +189,30 @@ function crearPuertasConImagenes() {
 
 // Seleccionar puerta en Monty Hall
 function seleccionarPuertaMonty(index) {
-    if (montyHallGame.gameEnded || montyHallGame.selectedDoor !== null) return;
+    console.log(`🚪 seleccionarPuertaMonty llamada con index: ${index}`);
+    console.log(`🎮 Estado del juego:`, {
+        gameEnded: montyHallGame.gameEnded,
+        selectedDoor: montyHallGame.selectedDoor,
+        doors: montyHallGame.doors
+    });
+    
+    if (montyHallGame.gameEnded || montyHallGame.selectedDoor !== null) {
+        console.log('❌ No se puede seleccionar puerta - Juego terminado o puerta ya seleccionada');
+        return;
+    }
 
     const door = montyHallGame.doors[index];
     montyHallGame.selectedDoor = index;
+    
+    console.log(`✅ Puerta ${door} (índice ${index}) seleccionada`);
 
     const doorImg = document.getElementById(`door${door}`);
     const messageDiv = document.getElementById("monty-message");
+    
+    if (!doorImg) {
+        console.error(`❌ No se encontró elemento door${door}`);
+        return;
+    }
 
     // Marcar puerta seleccionada
     doorImg.style.borderColor = "#4CAF50";
@@ -198,6 +227,8 @@ function seleccionarPuertaMonty(index) {
         .filter((idx) => idx !== index && montyHallGame.picks[montyHallGame.doors[idx]] === 'Cabra');
 
     montyHallGame.openedDoor = disponibles[Math.floor(Math.random() * disponibles.length)];
+    
+    console.log(`🚪 Puerta a abrir: ${montyHallGame.doors[montyHallGame.openedDoor]} (índice ${montyHallGame.openedDoor})`);
 
     // Animar apertura de puerta
     setTimeout(() => abrirPuertaConAnimacion(montyHallGame.openedDoor), 1500);
@@ -393,31 +424,71 @@ function cerrarModalMontyHall(ganaste) {
 
 // Configurar controles de voz para Monty Hall
 function configurarVozMontyHall() {
+    console.log('🎤 Configurando controles de voz para Monty Hall');
+    
     window.montyVoice = window.montyVoice || {};
 
     window.montyVoice.selectDoor = (idx) => {
-        if (montyHallGame.selectedDoor !== null) return;
+        console.log(`🚪 montyVoice.selectDoor llamada con índice: ${idx}`);
+        if (montyHallGame.selectedDoor !== null) {
+            console.log('❌ Puerta ya seleccionada, ignorando comando');
+            return;
+        }
         seleccionarPuertaMonty(idx);
     };
 
     window.montyVoice.selectAction = (cambiar) => {
-        if (montyHallGame.selectedDoor === null || montyHallGame.gameEnded) return;
+        console.log(`🎯 montyVoice.selectAction llamada con cambiar: ${cambiar}`);
+        if (montyHallGame.selectedDoor === null || montyHallGame.gameEnded) {
+            console.log('❌ No se puede ejecutar acción - Estado inválido');
+            return;
+        }
         finalizarMontyHall(cambiar);
     };
 
     window.montyVoice.closeModal = () => {
+        console.log('❌ montyVoice.closeModal llamada');
         const closeBtn = document.getElementById("monty-close");
         if (closeBtn && closeBtn.style.display !== "none") {
             closeBtn.click();
+        } else {
+            console.log('❌ Botón cerrar no disponible');
         }
     };
 
     window.montyVoice.restartGame = () => {
+        console.log('🔄 montyVoice.restartGame llamada');
         const restartBtn = document.getElementById("restart-monty");
         if (restartBtn && restartBtn.style.display !== "none") {
             restartBtn.click();
+        } else {
+            console.log('❌ Botón reiniciar no disponible');
         }
     };
+    
+    console.log('✅ Controles de voz configurados:', window.montyVoice);
+    
+    // 🧪 TEST AUTOMÁTICO - Verificar que todo está funcionando
+    setTimeout(() => {
+        console.log('\n🧪 === TEST AUTOMÁTICO DE MONTY HALL ===');
+        console.log('🔍 Modal display:', document.getElementById("monty-modal").style.display);
+        console.log('🔍 montyVoice disponible:', !!window.montyVoice);
+        console.log('🔍 selectDoor disponible:', typeof window.montyVoice?.selectDoor);
+        console.log('🔍 Estado del juego:', {
+            selectedDoor: montyHallGame.selectedDoor,
+            gameEnded: montyHallGame.gameEnded,
+            doors: montyHallGame.doors
+        });
+        
+        // Test de funciones
+        if (window.montyVoice && window.montyVoice.selectDoor) {
+            console.log('✅ Sistema listo para comandos de voz');
+            console.log('💡 Prueba diciendo: "puerta a", "puerta b" o "puerta c"');
+        } else {
+            console.error('❌ Sistema de voz NO configurado correctamente');
+        }
+        console.log('🧪 === FIN TEST AUTOMÁTICO ===\n');
+    }, 500);
 }
 
 // Limpiar handlers de voz
