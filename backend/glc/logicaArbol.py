@@ -4,7 +4,7 @@ class VisualizadorArbol:
     def __init__(self):
         self.url_js = os.path.join("frontend", "resources", "static", "js", "arbol.js")
         self.contador_nodos = 0
-        self.nodos_js = []
+        self.nodos_js = [],
         self.edges_js = []
 
     def generar_nodos_edges(self, nodo, padre_id=None):

@@ -5,7 +5,7 @@ Integración de GLC para Reconocimiento de Voz con el proyecto principal
 Proyecto Final - Autómatas y Lenguajes Formales
 """
 
-from flask import Flask, render_template, request, jsonify, session
+from flask import render_template, request, jsonify, session
 import sys
 import os
 from datetime import datetime
@@ -23,44 +23,44 @@ except ImportError:
 def integrar_rutas_glc(app):
     """
     Integra las rutas de GLC al app principal de Flask
-    
+
     Args:
         app: Instancia de Flask
     """
-    
+
     # Inicializar historial de comandos en la sesión
     def inicializar_historial():
         if 'historial_comandos' not in session:
             session['historial_comandos'] = []
         if 'ultimo_comando' not in session:
             session['ultimo_comando'] = None
-    
+
     @app.route('/glc/arbol')
     def mostrar_arbol_voz():
         """Muestra el árbol de reconocimiento de voz con el último comando"""
         inicializar_historial()
-        
+
         # Obtener último comando o usar ejemplo por defecto
         ultimo_comando = session.get('ultimo_comando', 'puerta a')
         historial = session.get('historial_comandos', [])
-        
-        return render_template('glc/arbol.html', 
+
+        return render_template('glc/arbol.html',
                              mensaje_validez="",
                              ultimo_comando=ultimo_comando,
                              historial_comandos=historial,
                              total_comandos=len(historial),
                              reglas_usadas=[])
-    
+
     @app.route('/glc/arbol/<comando>')
     def mostrar_arbol_comando_especifico(comando):
         """Muestra el árbol para un comando específico"""
-        return render_template('glc/arbol.html', 
+        return render_template('glc/arbol.html',
                              mensaje_validez="",
                              ultimo_comando=comando,
                              historial_comandos=session.get('historial_comandos', []),
                              total_comandos=len(session.get('historial_comandos', [])),
                              reglas_usadas=[])
-    
+
     @app.route('/glc/analizar', methods=['POST'])
     def analizar_comando_voz():
         """
@@ -72,33 +72,33 @@ def integrar_rutas_glc(app):
                 'error': 'Módulo GLC no disponible',
                 'valido': False
             }), 500
-            
+
         try:
             inicializar_historial()
             datos = request.get_json()
             comando = datos.get('comando', '').strip().lower()
-            
+
             if not comando:
                 return jsonify({
                     'error': 'Comando vacío',
                     'valido': False
                 })
-            
+
             # Crear analizador
             analizador = AnalizadorGramaticaVisual(auto_abrir=False)
-            
+
             # Procesar comando
             analizador.procesar_cadena(comando)
             analizador.construir_arbol()
-            
+
             # Generar derivación
             analizador.generar_proceso_desde_arbol()
-            
+
             es_valido = analizador.es_valido()
-            
+
             # Guardar en historial TODOS los comandos (válidos e inválidos)
             historial = session.get('historial_comandos', [])
-            
+
             # Agregar comando con timestamp
             entrada_historial = {
                 'comando': comando,
@@ -108,17 +108,17 @@ def integrar_rutas_glc(app):
                 'reglas_usadas': analizador.reglas_usadas if es_valido else [],
                 'valido': es_valido
             }
-            
+
             historial.append(entrada_historial)
-            
+
             # Mantener solo los últimos 20 comandos
             if len(historial) > 20:
                 historial = historial[-20:]
-            
+
             session['historial_comandos'] = historial
             session['ultimo_comando'] = comando
             session.permanent = True
-            
+
             resultado = {
                 'comando': comando,
                 'valido': es_valido,
@@ -128,15 +128,15 @@ def integrar_rutas_glc(app):
                 'arbol': analizador.arbol,
                 'total_comandos_sesion': len(session.get('historial_comandos', []))
             }
-            
+
             return jsonify(resultado)
-            
+
         except Exception as e:
             return jsonify({
                 'error': f'Error al procesar comando: {str(e)}',
                 'valido': False
             }), 500
-    
+
     @app.route('/glc/historial')
     def obtener_historial():
         """Obtiene el historial de comandos de la sesión"""
@@ -146,14 +146,14 @@ def integrar_rutas_glc(app):
             'ultimo_comando': session.get('ultimo_comando', None),
             'total': len(session.get('historial_comandos', []))
         })
-    
+
     @app.route('/glc/limpiar_historial', methods=['POST'])
     def limpiar_historial():
         """Limpia el historial de comandos"""
         session['historial_comandos'] = []
         session['ultimo_comando'] = None
         return jsonify({'mensaje': 'Historial limpiado', 'exito': True})
-    
+
     @app.route('/glc/comandos')
     def listar_comandos():
         """Lista todos los comandos reconocidos"""
@@ -166,25 +166,25 @@ def integrar_rutas_glc(app):
             },
             'juego': ['nueva partida']
         }
-        
+
         return jsonify(comandos)
-    
+
     @app.route('/glc/gramatica')
     def mostrar_gramatica():
         """Devuelve la gramática utilizada"""
         if not AnalizadorGramaticaVisual:
             return jsonify({'error': 'Módulo GLC no disponible'}), 500
-            
+
         # Crear instancia temporal para obtener la gramática
         analizador = AnalizadorGramaticaVisual(auto_abrir=False)
-        
+
         gramatica = {
             'reglas': analizador.GRAMATICA,
             'descripcion': 'Gramática Libre de Contexto para Reconocimiento de Voz',
             'simbolo_inicial': 'S',
             'no_terminales': [
-                'S', 'comando', 'movimiento', 'monty', 'juego', 
-                'puerta', 'puerta_a', 'puerta_b', 'puerta_c', 
+                'S', 'comando', 'movimiento', 'monty', 'juego',
+                'puerta', 'puerta_a', 'puerta_b', 'puerta_c',
                 'accion', 'control', 'nueva'
             ],
             'terminales': [
@@ -193,7 +193,5 @@ def integrar_rutas_glc(app):
                 'cerrar', 'reiniciar', 'otra', 'vez', 'nueva', 'partida'
             ]
         }
-        
-        return jsonify(gramatica)
 
-# Solo funciones de integración, sin demo
+        return jsonify(gramatica)

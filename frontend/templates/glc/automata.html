@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Árbol de Decisiones - Autómata Monty Hall</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        header {
+            margin-top: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 9%;
+            background-color: transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        header.scrolled {
+            background: #343a40;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 80px auto 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #6f42c1;
+        }
+
+        .stats-card {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-item {
+            padding: 10px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .wins {
+            color: #28a745;
+        }
+
+        .losses {
+            color: #dc3545;
+        }
+
+        #afn-network {
+            width: 100%;
+            height: 600px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #6f42c1, #6610f2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #5a6268);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, #17a2b8, #138496);
+            color: white;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .network-status {
+            padding: 15px;
+            text-align: center;
+            font-size: 16px;
+            color: white;
+            background: linear-gradient(45deg, #6f42c1, #6610f2);
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="#" class="logo">Autómata Monty Hall</a>
+        <nav>
+              <a href="{{ url_for('index') }}" class="active"> Inicio</a>
+            <a href="{{ url_for('laberinto') }}" >Juego</a>
+            <a href="{{ url_for('mostrar_arbol_voz') }}">GLC</a>
+
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="info-card">
+            <h2>🎮 Autómata Finito No Determinista</h2>
+            <p>Este diagrama muestra el árbol de decisiones del juego Monty Hall modelado como un AFN.</p>
+            <p>Cada transición representa una posible decisión del jugador y sus consecuencias.</p>
+        </div>
+
+        <div class="stats-card">
+            <div class="stat-item">
+                <div class="stat-value wins" id="wins-count">0</div>
+                <div>Partidas Ganadas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value losses" id="losses-count">0</div>
+                <div>Partidas Perdidas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="current-door">?</div>
+                <div>Puerta Premiada</div>
+            </div>
+        </div>
+
+        <div class="network-status" id="network-status">
+            Estado actual: <span id="current-state">inicio</span>
+        </div>
+
+        <div id="afn-network"></div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="mostrarSelectorHistorialAFN()">📝 Historial</button>
+            <button class="btn btn-success" onclick="reiniciarAutomata()">🔄 Reiniciar</button>
+            <button class="btn btn-info" onclick="exportarArbolAFN()">💾 Exportar</button>
+            <button class="btn btn-secondary" onclick="window.location.reload()">🔄 Recargar</button>
+        </div>
+    </div>
+
+    <!-- Cargar el archivo JavaScript del árbol del AFN -->
+    <script src="{{ url_for('static', filename='js/automataDinamico.js') }}"></script>
+
+    <script>
+        // Efecto de scroll para el header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Función para exportar el árbol del AFN
+        function exportarArbolAFN() {
+            const canvas = document.querySelector('#afn-network canvas');
+            if (canvas) {
+                const link = document.createElement('a');
+                link.download = 'arbol_decisiones_afn.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            } else {
+                alert('❌ No hay árbol cargado para exportar');
+            }
+        }
+
+        // Actualizar datos del autómata
+        function actualizarDatosAFN() {
+            fetch('/automata/estado_juego')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('wins-count').textContent = data.estadisticas?.ganadas || 0;
+                    document.getElementById('losses-count').textContent = data.estadisticas?.perdidas || 0;
+                    document.getElementById('current-door').textContent = data.puerta_premiada || '?';
+                    document.getElementById('current-state').textContent = data.estado_actual?.join(', ') || 'inicio';
+                });
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            actualizarDatosAFN();
+
+            // Cargar el árbol después de un pequeño retraso para asegurar que el contenedor esté listo
+            setTimeout(() => {
+                fetch('/automata/estado_juego')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.arbol_decisiones) {
+                            // El archivo JS ya se carga en el HTML
+                            console.log('🌳 Árbol del AFN cargado');
+                        }
+                    });
+            }, 300);
+        });
+
+        // Nueva versión para el AFN
+
+    </script>
+</body>
+</html>

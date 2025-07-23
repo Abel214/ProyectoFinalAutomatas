@@ -145,6 +145,24 @@
           particle.x = nx;
           particle.y = ny;
           renderMaze();
+           const direction =
+            dx === 1 ? 'derecha' :
+            dx === -1 ? 'izquierda' :
+            dy === 1 ? 'abajo' : 'arriba';
+
+        fetch('/automata/mover', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ direccion: direction })
+        });
+
+        if (layout[ny][nx] === 3) {
+            document.getElementById("status").textContent = "¡Llegaste al punto B!";
+        }
+
+
           if (layout[ny][nx] === 3) {
             document.getElementById("status").textContent =
               "¡Llegaste al punto B!";

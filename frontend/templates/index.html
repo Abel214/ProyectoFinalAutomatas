@@ -17,8 +17,8 @@
         <!-- Cambio importante: usar url_for para las rutas -->
         <a href="{{ url_for('index') }}" class="active"> Inicio</a>
         <a href="{{ url_for('laberinto') }}">Juego</a>
-        <a href="#">Documentación</a>
-        <a href="#">Acerca De</a>
+        <a href="{{ url_for('mostrar_arbol_voz') }}">GLC</a>
+         <a href="{{ url_for('mostrar_arbol_voz_Automata') }}">Automata</a>
     </nav>
 </header>
 <section class="home">

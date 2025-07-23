@@ -3,41 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>� Árbol de Reconocimiento de Voz - GLC</title>
+    <title>Árbol de Reconocimiento de Voz - GLC</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" />
+     <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        body{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana sans-serif;
             margin: 0;
             padding: 20px;
             min-height: 100vh;
             color: #333;
+            width: 100%;
+            height: 100vh;
+            overflow-x: hidden;
+            background-color: black;
+        }
+        header {
+        margin-top: 20px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 1rem 9%;
+        background-color: transparent;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        transition: all 0.3s ease; /* Agrega transición para suavizar los cambios */
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
+        header.scrolled {
+        background: black;
+            backdrop-filter: blur(4px);
+        box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+        margin-top: 0; /* Opcional: elimina el margen superior al hacer scroll */
         }
 
-        .header {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
 
-        .header h1 {
-            margin: 0;
-            font-size: 2.5em;
-            font-weight: 300;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
 
         .header p {
             margin: 10px 0 0 0;
@@ -71,8 +74,8 @@
         }
 
         #mynetwork {
-            width: 100%;
-            height: 600px;
+            width: 110%;
+            height: 500px;
             background: #ffffff;
             border: 1px solid #ddd;
             margin: 20px 0;
@@ -102,30 +105,11 @@
         }
 
         .controls {
-            padding: 20px 30px;
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
+            margin-top: 30px;
             text-align: center;
         }
 
-        .btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
-            margin: 5px;
-        }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
 
         .grammar-info {
             background: white;
@@ -165,13 +149,19 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>� Árbol de Reconocimiento de Voz</h1>
-            <p>Analizador GLC para Comandos de Voz del Laberinto y Monty Hall</p>
-        </div>
+    <header>
+    <a href="#" class="logo">Árbol de reconocimiento de voz</a>
 
-       <div class="info-section">
+    <nav>
+        <!-- Cambio importante: usar url_for para las rutas -->
+        <a href="{{ url_for('index') }}" class="active"> Inicio</a>
+        <a href="{{ url_for('laberinto') }}">Juego</a>
+        <a href="{{ url_for('mostrar_arbol_voz') }}">GLC</a>
+        <a href="">Acerca De</a>
+    </nav>
+    </header>
+    <section>
+
             <div class="info-card">
                 <h3>📋 Información del Análisis</h3>
                 <p><strong>Comando analizado:</strong> <span id="comando-actual">{{ ultimo_comando or 'puerta a' }}</span></p>
@@ -210,9 +200,9 @@
                 <p><strong>Monty Hall:</strong> puerta a/b/c, cambiar, mantener, cerrar, reiniciar, otra vez</p>
                 <p><strong>Juego:</strong> nueva partida</p>
             </div>
-        </div>
 
-        <div class="network-container">
+
+        <div class="container">
             <h2 style="text-align: center; color: #667eea;">🎯 Árbol Dinámico de Comandos</h2>
             <div class="network-status" id="network-status">
                 🎯 Comando: "{{ ultimo_comando or 'puerta a' }}" | 📊 Total: {{ total_comandos or 0 }}
@@ -226,12 +216,15 @@
             <button class="btn" onclick="exportarArbol()">💾 Exportar</button>
             <button class="btn" onclick="mostrarEstadisticas()">📊 Estadísticas</button>
             <button class="btn" onclick="mostrarSelectorHistorial()">📝 Historial</button>
+           <button class="btn" onclick="window.location.href='automata.html'">
+            Ir al Autómata
+            </button>
         </div>
-    </div>
 
+    </section>
     <!-- Cargar el archivo JavaScript dinámico -->
     <script src="{{ url_for('static', filename='js/arbolVozDinamico.js') }}"></script>
-    
+
     <script>
         // Establecer timestamp
         document.getElementById('timestamp').textContent = new Date().toLocaleString();
@@ -257,12 +250,17 @@
                 document.getElementById('network-status').style.borderLeft = '4px solid #28a745';
             }, 1000);
         });
-    </script>
-</body>
-</html>
-                manejarError(mensaje || 'Error al crear la visualización');
+        // Efecto de scroll para el header (CORRECCIÓN)
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
             }
-        };
+        });
     </script>
+
+
 </body>
 </html>
