@@ -1,0 +1,617 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Autómata Finito - Reconocimiento de Voz</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .info-panel {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            background: #f8f9fa;
+        }
+
+        .stats-card {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-card h3 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+
+        .automata-container {
+            padding: 20px;
+        }
+
+        #automata-network {
+            width: 100%;
+            height: 600px;
+            background: #ffffff;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: #f8f9fa;
+            margin: 20px;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .controls {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Autómata Finito No Determinista</h1>
+            <p>Reconocimiento de Voz - Laberinto y Monty Hall</p>
+        </div>
+
+        <div class="info-panel">
+            <div class="stats-card">
+                <h3>📊 Estadísticas</h3>
+                <p><strong>Estados:</strong> 12</p>
+                <p><strong>Transiciones:</strong> 11</p>
+                <p><strong>Comandos:</strong> 11</p>
+            </div>
+            
+            <div class="stats-card">
+                <h3>🎮 Estado del Juego</h3>
+                <p><strong>Estado Actual:</strong> 11</p>
+                <p><strong>Monty Hall:</strong> 🔴 Inactivo</p>
+            </div>
+            
+            <div class="stats-card">
+                <h3>🎯 Alfabeto</h3>
+                <p><strong>Símbolos:</strong> 10</p>
+                <p><small>Comandos reconocidos por el autómata</small></p>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4CAF50;"></div>
+                <span>Estado Inicial/Victoria</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #2196F3;"></div>
+                <span>Movimiento</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FF9800;"></div>
+                <span>Selección Puerta</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #F44336;"></div>
+                <span>Derrota</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #9C27B0;"></div>
+                <span>Control</span>
+            </div>
+        </div>
+
+        <div class="automata-container">
+            <div id="automata-network"></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="resetZoom()">🔍 Centrar Vista</button>
+            <button class="btn" onclick="exportarDatos()">💾 Exportar Datos</button>
+            <button class="btn" onclick="window.close()">❌ Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        // Datos del autómata
+        const automataData = {
+    "nodes": [
+        {
+            "id": 0,
+            "label": "INICIO",
+            "title": "Estado inicial del juego",
+            "color": "#4CAF50",
+            "x": 100,
+            "y": 100,
+            "font": {
+                "size": 12
+            },
+            "shape": "circle"
+        },
+        {
+            "id": 1,
+            "label": "POS_DERECHA",
+            "title": "Movimiento hacia derecha",
+            "color": "#2196F3",
+            "x": 250,
+            "y": 100,
+            "font": {
+                "size": 12
+            },
+            "shape": "box"
+        },
+        {
+            "id": 2,
+            "label": "POS_ARRIBA",
+            "title": "Movimiento hacia arriba",
+            "color": "#2196F3",
+            "x": 250,
+            "y": 0,
+            "font": {
+                "size": 12
+            },
+            "shape": "box"
+        },
+        {
+            "id": 3,
+            "label": "ZONA_MONTY",
+            "title": "Entrada a zona Monty Hall",
+            "color": "#2196F3",
+            "x": 400,
+            "y": 0,
+            "font": {
+                "size": 12
+            },
+            "shape": "box"
+        },
+        {
+            "id": 4,
+            "label": "PUERTA_A",
+            "title": "Seleccion\u00f3 puerta A",
+            "color": "#FF9800",
+            "x": 400,
+            "y": 150,
+            "font": {
+                "size": 12
+            },
+            "shape": "diamond"
+        },
+        {
+            "id": 5,
+            "label": "ACCION_MANTENER_PERDEDOR",
+            "title": "Acci\u00f3n: mantener - Perdiste",
+            "color": "#F44336",
+            "x": 300,
+            "y": 300,
+            "font": {
+                "size": 12
+            },
+            "shape": "triangle"
+        },
+        {
+            "id": 6,
+            "label": "REINICIO_MONTY",
+            "title": "Reinicio desde zona Monty Hall",
+            "color": "#9C27B0",
+            "x": 300,
+            "y": 200,
+            "font": {
+                "size": 12
+            },
+            "shape": "hexagon"
+        },
+        {
+            "id": 7,
+            "label": "PUERTA_B",
+            "title": "Seleccion\u00f3 puerta B",
+            "color": "#FF9800",
+            "x": 500,
+            "y": 150,
+            "font": {
+                "size": 12
+            },
+            "shape": "diamond"
+        },
+        {
+            "id": 8,
+            "label": "ACCION_CAMBIAR_GANADOR",
+            "title": "Acci\u00f3n: cambiar - \u00a1GANASTE!",
+            "color": "#4CAF50",
+            "x": 500,
+            "y": 100,
+            "font": {
+                "size": 12
+            },
+            "shape": "star",
+            "borderWidth": 3,
+            "borderColor": "#00FF00"
+        },
+        {
+            "id": 9,
+            "label": "POS_IZQUIERDA",
+            "title": "Movimiento hacia izquierda",
+            "color": "#2196F3",
+            "x": 350,
+            "y": 100,
+            "font": {
+                "size": 12
+            },
+            "shape": "box"
+        },
+        {
+            "id": 10,
+            "label": "POS_ABAJO",
+            "title": "Movimiento hacia abajo",
+            "color": "#2196F3",
+            "x": 350,
+            "y": 200,
+            "font": {
+                "size": 12
+            },
+            "shape": "box"
+        },
+        {
+            "id": 11,
+            "label": "NUEVA_PARTIDA",
+            "title": "Nueva partida iniciada",
+            "color": "#9C27B0",
+            "x": 100,
+            "y": 100,
+            "font": {
+                "size": 12
+            },
+            "shape": "hexagon",
+            "borderWidth": 4,
+            "borderColor": "#FF0000"
+        }
+    ],
+    "edges": [
+        {
+            "from": 0,
+            "to": 1,
+            "label": "derecha",
+            "arrows": "to",
+            "color": {
+                "color": "#2B7CE9"
+            },
+            "width": 2
+        },
+        {
+            "from": 1,
+            "to": 2,
+            "label": "arriba",
+            "arrows": "to",
+            "color": {
+                "color": "#2B7CE9"
+            },
+            "width": 2
+        },
+        {
+            "from": 2,
+            "to": 3,
+            "label": "derecha",
+            "arrows": "to",
+            "color": {
+                "color": "#2B7CE9"
+            },
+            "width": 2
+        },
+        {
+            "from": 3,
+            "to": 4,
+            "label": "puerta a",
+            "arrows": "to",
+            "color": {
+                "color": "#2B7CE9"
+            },
+            "width": 2
+        },
+        {
+            "from": 4,
+            "to": 5,
+            "label": "mantener",
+            "arrows": "to",
+            "color": {
+                "color": "#2B7CE9"
+            },
+            "width": 2
+        },
+        {
+            "from": 5,
+            "to": 6,
+            "label": "reiniciar",
+            "arrows": "to",
+            "color": {
+                "color": "#2B7CE9"
+            },
+            "width": 2
+        },
+        {
+            "from": 6,
+            "to": 7,
+            "label": "puerta b",
+            "arrows": "to",
+            "color": {
+                "color": "#2B7CE9"
+            },
+            "width": 2
+        },
+        {
+            "from": 7,
+            "to": 8,
+            "label": "cambiar",
+            "arrows": "to",
+            "color": {
+                "color": "#2B7CE9"
+            },
+            "width": 2
+        },
+        {
+            "from": 8,
+            "to": 9,
+            "label": "izquierda",
+            "arrows": "to",
+            "color": {
+                "color": "#2B7CE9"
+            },
+            "width": 2
+        },
+        {
+            "from": 9,
+            "to": 10,
+            "label": "abajo",
+            "arrows": "to",
+            "color": {
+                "color": "#2B7CE9"
+            },
+            "width": 2
+        },
+        {
+            "from": 10,
+            "to": 11,
+            "label": "nueva partida",
+            "arrows": "to",
+            "color": {
+                "color": "#2B7CE9"
+            },
+            "width": 2
+        }
+    ],
+    "estado_actual": 11,
+    "estados_finales": [
+        8
+    ],
+    "historial": [
+        {
+            "comando": "derecha",
+            "timestamp": "2025-07-23T08:46:32.006569",
+            "estado_origen": 0,
+            "estado_destino": 1,
+            "resultado": "exitoso"
+        },
+        {
+            "comando": "arriba",
+            "timestamp": "2025-07-23T08:46:32.010442",
+            "estado_origen": 1,
+            "estado_destino": 2,
+            "resultado": "exitoso"
+        },
+        {
+            "comando": "derecha",
+            "timestamp": "2025-07-23T08:46:32.013732",
+            "estado_origen": 2,
+            "estado_destino": 3,
+            "resultado": "exitoso"
+        },
+        {
+            "comando": "puerta a",
+            "timestamp": "2025-07-23T08:46:32.016490",
+            "estado_origen": 3,
+            "estado_destino": 4,
+            "resultado": "exitoso"
+        },
+        {
+            "comando": "mantener",
+            "timestamp": "2025-07-23T08:46:32.019355",
+            "estado_origen": 4,
+            "estado_destino": 5,
+            "resultado": "exitoso"
+        },
+        {
+            "comando": "reiniciar",
+            "timestamp": "2025-07-23T08:46:32.021630",
+            "estado_origen": 5,
+            "estado_destino": 6,
+            "resultado": "exitoso"
+        },
+        {
+            "comando": "puerta b",
+            "timestamp": "2025-07-23T08:46:32.023739",
+            "estado_origen": 6,
+            "estado_destino": 7,
+            "resultado": "exitoso"
+        },
+        {
+            "comando": "cambiar",
+            "timestamp": "2025-07-23T08:46:32.026057",
+            "estado_origen": 7,
+            "estado_destino": 8,
+            "resultado": "exitoso"
+        },
+        {
+            "comando": "izquierda",
+            "timestamp": "2025-07-23T08:46:32.027870",
+            "estado_origen": 8,
+            "estado_destino": 9,
+            "resultado": "exitoso"
+        },
+        {
+            "comando": "abajo",
+            "timestamp": "2025-07-23T08:46:32.029876",
+            "estado_origen": 9,
+            "estado_destino": 10,
+            "resultado": "exitoso"
+        },
+        {
+            "comando": "nueva partida",
+            "timestamp": "2025-07-23T08:46:32.032419",
+            "estado_origen": 10,
+            "estado_destino": 11,
+            "resultado": "exitoso"
+        }
+    ],
+    "estadisticas": {
+        "total_estados": 12,
+        "total_transiciones": 11,
+        "comandos_procesados": 11,
+        "alfabeto_size": 10,
+        "juego_activo": false,
+        "monty_hall_activo": false
+    }
+};
+        
+        // Crear la red del autómata
+        const container = document.getElementById('automata-network');
+        const data = {
+            nodes: new vis.DataSet(automataData.nodes),
+            edges: new vis.DataSet(automataData.edges)
+        };
+        
+        const options = {
+            layout: {
+                improvedLayout: false
+            },
+            physics: {
+                enabled: false
+            },
+            interaction: {
+                dragNodes: true,
+                zoomView: true,
+                dragView: true
+            },
+            nodes: {
+                font: {
+                    size: 14,
+                    color: '#ffffff'
+                },
+                borderWidth: 2,
+                shadow: true
+            },
+            edges: {
+                font: {
+                    size: 12,
+                    color: '#333333',
+                    background: 'rgba(255,255,255,0.8)'
+                },
+                smooth: {
+                    type: 'continuous'
+                },
+                arrows: {
+                    to: {
+                        enabled: true,
+                        scaleFactor: 1.2
+                    }
+                }
+            }
+        };
+        
+        const network = new vis.Network(container, data, options);
+        
+        // Funciones de control
+        function resetZoom() {
+            network.fit();
+        }
+        
+        function exportarDatos() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(automataData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "automata_data.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+        
+        // Resaltar estado actual
+        network.on("afterDrawing", function (ctx) {
+            const nodeId = automataData.estado_actual;
+            const nodePosition = network.getPositions([nodeId]);
+            if (nodePosition[nodeId]) {
+                ctx.strokeStyle = '#FF0000';
+                ctx.lineWidth = 4;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.arc(nodePosition[nodeId].x, nodePosition[nodeId].y, 40, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        });
+        
+        console.log('Autómata cargado:', automataData);
+    </script>
+</body>
+</html>

@@ -3,6 +3,7 @@ import os
 import re
 
 from .logicaArbol import VisualizadorArbol
+from .logicaAFND import VisualizadorAFND
 
 class AnalizadorGLC:
     GRAMATICA = [
@@ -56,6 +57,7 @@ class AnalizadorGLC:
         self.posicion = 0
         self.es_cadena_valida = False
         self.reglas_usadas = []  # <-- Agrega esto
+        self.visualizador_afnd = VisualizadorAFND()  # Nuevo: visualizador del AFND
 
     def registrar_regla(self, no_terminal, entrada, produccion):
         self.reglas_usadas.append({
@@ -108,6 +110,14 @@ class AnalizadorGLC:
         self.tokens = self.tokenizar(cadena)
         self.posicion = 0
         print(f"🔍 Tokens extraídos: {self.tokens}")
+        
+        # Construir el árbol para validar la gramática
+        self.construir_arbol()
+        es_valido = self.es_valido()
+        
+        # Actualizar el AFND con el comando procesado
+        self.visualizador_afnd.procesar_comando_y_actualizar(cadena, es_valido)
+        
         return self.tokens is not None
 
     def peek_token(self):
@@ -421,6 +431,24 @@ class AnalizadorGLC:
         for i, hijo in enumerate(hijos):
             nuevo_prefijo = prefijo + ('    ' if es_ultimo else '│   ')
             self.imprimir_arbol(hijo, nuevo_prefijo, i == len(hijos) - 1)
+    
+    def generar_automata_html(self, archivo="automata.html"):
+        """Genera el archivo HTML para visualizar el AFND"""
+        exito, ruta = self.visualizador_afnd.generar_html_automata(archivo)
+        if exito:
+            print(f"✅ Autómata generado en: {ruta}")
+            return ruta
+        else:
+            print("❌ Error al generar el autómata")
+            return None
+    
+    def obtener_estado_automata(self):
+        """Obtiene el estado actual del autómata"""
+        return self.visualizador_afnd.obtener_automata().obtener_automata_para_visualizacion()
+    
+    def exportar_automata_json(self):
+        """Exporta el autómata a formato JSON"""
+        return self.visualizador_afnd.obtener_automata().exportar_json()
 
 
 class AnalizadorGramaticaVisual(AnalizadorGLC):
@@ -442,23 +470,21 @@ class AnalizadorGramaticaVisual(AnalizadorGLC):
             return False
 
     def mostrar_analisis(self, cadena):
-        print(f"\n🎨 Analizando código CSS: '{cadena}'")
+        print(f"\n🎨 Analizando comando de voz: '{cadena}'")
         print("=" * 50)
 
         if not self.procesar_cadena(cadena):
             return False
 
         print(f"🔍 Tokens: {self.tokens}")
-        print("📝 Gramática CSS:")
-        print("   S → clasenombre S | ε")
-        print("   clasenombre → \".\" nombre \"{\" propiedades \"}\"")
-        print("   nombre → letra | nombre letra | nombre digito | nombre \"-\" | nombre \"_\"")
-        print("   propiedades → propiedad | propiedades propiedad")
-        print("   propiedad → \"color:\" valor \";\" | \"background-color:\" valor \";\" | ...")
-        print("   valor → color | tamaño | alineacion | numero")
-        print("   color → \"red\" | \"yellow\" | \"green\" | \"rgba(...)\"")
-        print("   tamaño → numero unidad")
-        print("   unidad → \"px\" | \"em\" | \"%\"")
+        print("📝 Gramática de Reconocimiento de Voz:")
+        print("   S → comando | ε")
+        print("   comando → movimiento | monty | juego")
+        print("   movimiento → 'izquierda' | 'derecha' | 'arriba' | 'abajo'")
+        print("   monty → puerta | accion | control")
+        print("   puerta → puerta_a | puerta_b | puerta_c")
+        print("   accion → 'cambiar' | 'mantener'")
+        print("   control → 'cerrar' | 'reiniciar' | 'otra vez'")
 
         print("\n🌳 Árbol de Derivación:")
         self.construir_arbol()
@@ -470,14 +496,23 @@ class AnalizadorGramaticaVisual(AnalizadorGLC):
             print(f"{i + 1:2}. {forma}")
         
         validez = self.es_valido()
-        mensaje_validez = "✅ El código CSS es **VÁLIDO** según la gramática." if validez else "❌ El código CSS es **INVÁLIDO** según la gramática."
+        mensaje_validez = "✅ El comando es **VÁLIDO** según la gramática." if validez else "❌ El comando es **INVÁLIDO** según la gramática."
         print(f"\n{mensaje_validez}")
         
+        # Generar visualización del árbol
         if self.visualizador.visualizar_arbol(self.arbol):
             if self.auto_abrir:
                 self.abrir_html()
         else:
-            print("❌ Error al generar visualización")
+            print("❌ Error al generar visualización del árbol")
+
+        # Mostrar información del autómata
+        estado_automata = self.obtener_estado_automata()
+        print(f"\n🤖 Estado del Autómata:")
+        print(f"   Estados totales: {estado_automata['estadisticas']['total_estados']}")
+        print(f"   Transiciones: {estado_automata['estadisticas']['total_transiciones']}")
+        print(f"   Estado actual: {estado_automata['estado_actual']}")
+        print(f"   Monty Hall activo: {estado_automata['estadisticas']['monty_hall_activo']}")
 
         return True
 
@@ -486,31 +521,48 @@ class AnalizadorGramaticaVisual(AnalizadorGLC):
         self.auto_abrir = activar
         estado = "activada" if activar else "desactivada"
         print(f"🔧 Apertura automática {estado}")
+    
+    def mostrar_automata(self):
+        """Genera y muestra el autómata en el navegador"""
+        ruta_automata = self.generar_automata_html()
+        if ruta_automata and self.auto_abrir:
+            try:
+                webbrowser.open(f'file://{os.path.abspath(ruta_automata)}')
+                print("🚀 Autómata abierto en el navegador")
+                return True
+            except Exception as e:
+                print(f"❌ Error al abrir autómata: {e}")
+                return False
+        return ruta_automata is not None
 
 
 if __name__ == "__main__":
     analizador = AnalizadorGramaticaVisual(auto_abrir=True)
-    print("🎨 Analizador de Gramática CSS")
+    print("� Analizador de Gramática - Reconocimiento de Voz")
     print("=" * 60)
 
     casos_prueba = [
-        """.container {
-            color: red;
-            font-size: 16px;
-        }""",
-        
-        """.header {
-            background-color: rgba(255, 0, 0, 0.5);
-            text-align: center;
-        }""",
-        
-        """.button {
-            color: blue;
-            font-size: 14px;
-            line-height: 1.5;
-        }"""
+        "derecha",
+        "puerta a",
+        "cambiar",
+        "izquierda",
+        "arriba",
+        "puerta b",
+        "mantener",
+        "reiniciar",
+        "nueva partida"
     ]
     
-    for caso in casos_prueba:
+    print("🧪 Ejecutando casos de prueba del reconocimiento de voz...")
+    for i, caso in enumerate(casos_prueba, 1):
+        print(f"\n--- Caso {i} ---")
         analizador.mostrar_analisis(caso)
-        print("\n" + "-" * 60 + "\n")
+        print("-" * 40)
+    
+    # Mostrar el autómata final
+    print("\n🤖 Generando autómata completo...")
+    analizador.mostrar_automata()
+    
+    # Exportar datos del autómata
+    datos_automata = analizador.exportar_automata_json()
+    print(f"\n📊 Autómata exportado con {len(datos_automata['estados'])} estados y {len(datos_automata['transiciones'])} transiciones")
