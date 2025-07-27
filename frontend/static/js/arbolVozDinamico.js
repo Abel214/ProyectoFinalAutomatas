@@ -479,7 +479,7 @@ class ArbolVozDinamico {
             id: idCounter++,
             label: `Historial\n(${historial.length} comandos)`,
             color: '#E74C3C',
-            font: { size: 18, color: 'white' },
+            font: { size: 18, color: 'white', bold: true },
             shape: 'circle',
             size: 40
         });
@@ -487,27 +487,35 @@ class ArbolVozDinamico {
         // Crear rama para cada comando en el historial
         historial.forEach((entrada, index) => {
             const comando = entrada.comando;
+            const esValido = entrada.valido;
             const tokens = entrada.tokens || comando.split(' ');
-            const tipoComando = this.determinarTipoComando(comando);
-            const colorTipo = this.obtenerColorTipo(tipoComando);
+            const timestamp = entrada.timestamp;
+            
+            // Color basado en validez de la gramática
+            const colorComando = esValido ? '#27AE60' : '#E74C3C'; // Verde para válido, rojo para inválido
+            const textColor = 'white';
+            const iconoValidez = esValido ? '✅' : '❌';
             
             // Nodo principal del comando
             const nodoComando = {
                 id: idCounter++,
-                label: `Cmd ${index + 1}\n"${comando}"`,
-                color: colorTipo,
-                font: { size: 14, color: 'white' },
+                label: `${iconoValidez} Cmd ${index + 1}\n"${comando}"`,
+                color: colorComando,
+                font: { size: 14, color: textColor, bold: true },
                 shape: 'circle',
-                title: `Comando: ${comando}\nHora: ${entrada.timestamp}\nTipo: ${tipoComando}`
+                size: 30,
+                title: `Comando: ${comando}\nHora: ${timestamp}\nVálido: ${esValido ? 'SÍ' : 'NO'}\nGramática: ${esValido ? 'Reconocido por GLC' : 'No válido según GLC'}`
             };
             nodos.push(nodoComando);
             
-            // Conectar con el nodo raíz
+            // Conectar con el nodo raíz con color según validez
             aristas.push({
                 from: 0,
                 to: nodoComando.id,
-                label: entrada.timestamp,
-                font: { size: 10 }
+                label: timestamp,
+                font: { size: 10 },
+                color: { color: colorComando },
+                width: esValido ? 3 : 2 // Línea más gruesa para comandos válidos
             });
             
             // Agregar nodos de tokens para este comando
@@ -515,16 +523,20 @@ class ArbolVozDinamico {
                 const nodoToken = {
                     id: idCounter++,
                     label: token,
-                    color: '#BDC3C7',
-                    font: { size: 12, color: 'black' },
+                    color: esValido ? '#D5F4E6' : '#FADBD8', // Verde claro para válidos, rojo claro para inválidos
+                    font: { size: 12, color: '#2C3E50' },
                     shape: 'box',
-                    size: 20
+                    size: 18,
+                    borderWidth: 2,
+                    borderColor: colorComando
                 };
                 nodos.push(nodoToken);
                 
                 aristas.push({
                     from: nodoComando.id,
-                    to: nodoToken.id
+                    to: nodoToken.id,
+                    color: { color: colorComando },
+                    width: 1
                 });
             });
         });
@@ -534,6 +546,8 @@ class ArbolVozDinamico {
         this.edges.update(aristas);
         
         console.log(`🌳 Historial completo generado: ${historial.length} comandos, ${nodos.length} nodos`);
+        console.log(`✅ Comandos válidos: ${historial.filter(h => h.valido).length}`);
+        console.log(`❌ Comandos inválidos: ${historial.filter(h => !h.valido).length}`);
     }
 
     // Función de prueba para debug

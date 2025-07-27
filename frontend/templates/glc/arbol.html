@@ -201,6 +201,13 @@
                 <p><strong>Juego:</strong> nueva partida</p>
             </div>
 
+            <div class="info-card">
+                <h3>🎨 Sistema de Colores del Historial</h3>
+                <p><strong style="color: #27AE60;">✅ Verde:</strong> Comandos válidos según la gramática GLC</p>
+                <p><strong style="color: #E74C3C;">❌ Rojo:</strong> Comandos inválidos (no reconocidos por la gramática)</p>
+                <p><strong>💡 Tip:</strong> Usa el botón "Ver Historial Visual" para ver todos los comandos con colores</p>
+            </div>
+
 
         <div class="container">
             <h2 style="text-align: center; color: #667eea;">🎯 Árbol Dinámico de Comandos</h2>
@@ -216,6 +223,7 @@
             <button class="btn" onclick="exportarArbol()">💾 Exportar</button>
             <button class="btn" onclick="mostrarEstadisticas()">📊 Estadísticas</button>
             <button class="btn" onclick="mostrarSelectorHistorial()">📝 Historial</button>
+            <button class="btn" onclick="mostrarHistorialVisual()" style="background: linear-gradient(45deg, #667eea, #764ba2);">🌳 Ver Historial Visual</button>
            <button class="btn" onclick="window.location.href='automata.html'">
             Ir al Autómata
             </button>
@@ -259,6 +267,63 @@
                 header.classList.remove('scrolled');
             }
         });
+
+        // Funciones adicionales para los botones
+        function exportarArbol() {
+            alert('Función de exportar en desarrollo');
+        }
+
+        function mostrarEstadisticas() {
+            const stats = `
+            📊 Estadísticas del Sistema:
+            - Comandos válidos: ${totalComandos}
+            - Último comando: ${ultimoComando}
+            - Gramática: GLC para Reconocimiento de Voz
+            - Estado: Activo
+            `;
+            alert(stats);
+        }
+
+        function mostrarSelectorHistorial() {
+            fetch('/glc/historial_completo')
+            .then(response => response.json())
+            .then(data => {
+                let historialText = "📝 Historial de Comandos:\n\n";
+                if (data.historial && data.historial.length > 0) {
+                    data.historial.forEach((cmd, index) => {
+                        const status = cmd.valido ? '✅ VÁLIDO' : '❌ INVÁLIDO';
+                        historialText += `${index + 1}. ${cmd.comando} - ${status} (${cmd.timestamp})\n`;
+                    });
+                    historialText += `\n📊 Resumen: ${data.validos} válidos, ${data.invalidos} inválidos`;
+                } else {
+                    historialText += "No hay comandos en el historial.";
+                }
+                alert(historialText);
+            })
+            .catch(error => {
+                console.error('Error al obtener historial:', error);
+                alert('Error al cargar el historial');
+            });
+        }
+
+        // Función para mostrar historial visual con colores
+        function mostrarHistorialVisual() {
+            fetch('/glc/historial_completo')
+            .then(response => response.json())
+            .then(data => {
+                if (data.historial && data.historial.length > 0) {
+                    console.log('🎨 Mostrando historial visual con colores');
+                    console.log(`📊 Total: ${data.total}, Válidos: ${data.validos}, Inválidos: ${data.invalidos}`);
+                    arbolDinamico.mostrarHistorialCompleto(data.historial);
+                } else {
+                    alert('No hay comandos en el historial para mostrar visualmente.');
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar historial visual:', error);
+                alert('Error al cargar el historial visual');
+            });
+        }
     </script>
 
 

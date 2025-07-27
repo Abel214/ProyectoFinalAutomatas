@@ -147,12 +147,33 @@ def integrar_rutas_glc(app):
 
     @app.route('/glc/historial')
     def obtener_historial():
-        """Obtiene el historial de comandos de la sesión"""
+        """Obtiene el historial de comandos válidos e inválidos de la sesión"""
         inicializar_historial()
+        historial = session.get('historial_comandos', [])
+        
+        # Filtrar solo comandos válidos para el endpoint /glc/historial
+        historial_valido = [cmd for cmd in historial if cmd.get('valido', False)]
+        
         return jsonify({
-            'historial': session.get('historial_comandos', []),
+            'historial': historial_valido,
             'ultimo_comando': session.get('ultimo_comando', None),
-            'total': len(session.get('historial_comandos', []))
+            'total': len(historial_valido),
+            'mensaje': f'Mostrando {len(historial_valido)} comandos válidos'
+        })
+
+    @app.route('/glc/historial_completo')
+    def obtener_historial_completo():
+        """Obtiene el historial completo de comandos (válidos e inválidos) de la sesión"""
+        inicializar_historial()
+        historial = session.get('historial_comandos', [])
+        
+        return jsonify({
+            'historial': historial,
+            'ultimo_comando': session.get('ultimo_comando', None),
+            'total': len(historial),
+            'validos': len([cmd for cmd in historial if cmd.get('valido', False)]),
+            'invalidos': len([cmd for cmd in historial if not cmd.get('valido', False)]),
+            'mensaje': f'Mostrando {len(historial)} comandos totales'
         })
 
     @app.route('/glc/limpiar_historial', methods=['POST'])
