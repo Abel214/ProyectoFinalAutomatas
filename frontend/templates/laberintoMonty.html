@@ -279,6 +279,24 @@
 
         // Botón nueva partida
         document.getElementById("new-game").addEventListener("click", () => {
+            // Resetear historial de comandos GLC
+            fetch('/glc/reset_nueva_partida', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('🔄 Historial GLC reseteado por botón nueva partida');
+                }
+            })
+            .catch(error => {
+                console.error('Error al resetear historial GLC:', error);
+            });
+
+            // Resetear el juego del laberinto
             layout = generateMaze(10, 10);
             findStart();
             renderMaze();

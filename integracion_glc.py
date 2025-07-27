@@ -99,6 +99,14 @@ def integrar_rutas_glc(app):
             # Guardar en historial TODOS los comandos (válidos e inválidos)
             historial = session.get('historial_comandos', [])
 
+            # Verificar si es comando "nueva partida" para resetear historial DESPUÉS de procesarlo
+            comando_limpio = comando.lower().strip()
+            if comando_limpio in ['nueva partida', 'nueva']:
+                # Resetear historial completamente DESPUÉS de procesar
+                historial = []
+                session['historial_comandos'] = []
+                session['ultimo_comando'] = None
+
             # Agregar comando con timestamp
             entrada_historial = {
                 'comando': comando,
@@ -195,3 +203,21 @@ def integrar_rutas_glc(app):
         }
 
         return jsonify(gramatica)
+
+    @app.route('/glc/reset_nueva_partida', methods=['POST'])
+    def reset_nueva_partida():
+        """Resetea el historial cuando inicia una nueva partida"""
+        try:
+            session['historial_comandos'] = []
+            session['ultimo_comando'] = None
+            session.permanent = True
+            
+            return jsonify({
+                'success': True,
+                'mensaje': 'Historial reseteado para nueva partida'
+            })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'mensaje': f'Error al resetear historial: {str(e)}'
+            })

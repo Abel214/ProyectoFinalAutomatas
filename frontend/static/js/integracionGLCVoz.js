@@ -3,6 +3,27 @@
 
 // Función para enviar comando al analizador GLC
 function enviarComandoGLC(comando) {
+    // Verificar si es comando "nueva partida" para resetear historial
+    const comandoLimpio = comando.toLowerCase().trim();
+    if (comandoLimpio === 'nueva partida' || comandoLimpio === 'nueva') {
+        // Resetear historial antes de procesar el comando
+        fetch('/glc/reset_nueva_partida', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('🔄 Historial reseteado para nueva partida');
+            }
+        })
+        .catch(error => {
+            console.error('Error al resetear historial:', error);
+        });
+    }
+
     fetch('/glc/analizar', {
         method: 'POST',
         headers: {
