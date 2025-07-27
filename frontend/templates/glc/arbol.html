@@ -157,6 +157,8 @@
         <a href="{{ url_for('index') }}" class="active"> Inicio</a>
         <a href="{{ url_for('laberinto') }}">Juego</a>
         <a href="{{ url_for('mostrar_arbol_voz') }}">GLC</a>
+        <a href="{{ url_for('mostrar_arbol_voz_Automata') }}">Automata</a>
+        <a href="{{ url_for('mostrar_automata_dinamico') }}" title="Autómata construido dinámicamente">🤖 Dinámico</a>
         <a href="">Acerca De</a>
     </nav>
     </header>
@@ -199,6 +201,14 @@
                 <p><strong>Movimiento:</strong> izquierda, derecha, arriba, abajo</p>
                 <p><strong>Monty Hall:</strong> puerta a/b/c, cambiar, mantener, cerrar, reiniciar, otra vez</p>
                 <p><strong>Juego:</strong> nueva partida</p>
+                
+                <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 5px; border-left: 4px solid #2196f3;">
+                    <strong>🤖 ¡Nuevo!</strong> 
+                    <a href="{{ url_for('mostrar_automata_dinamico') }}" style="color: #1976d2; text-decoration: none; font-weight: bold;">
+                        Ver Autómata Dinámico →
+                    </a>
+                    <br><small>Visualiza un autómata que se construye automáticamente con tus comandos válidos</small>
+                </div>
             </div>
 
             <div class="info-card">

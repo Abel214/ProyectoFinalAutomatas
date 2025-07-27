@@ -51,6 +51,20 @@ def integrar_rutas_glc(app):
                              total_comandos=len(historial),
                              reglas_usadas=[])
 
+    @app.route('/glc/automata_dinamico')
+    def mostrar_automata_dinamico():
+        """Muestra el autómata dinámico construido por comandos válidos"""
+        inicializar_historial()
+        
+        # Obtener comandos válidos del historial
+        historial = session.get('historial_comandos', [])
+        comandos_validos = [cmd for cmd in historial if cmd.get('valido', False)]
+        
+        return render_template('glc/automata_dinamico.html',
+                             comandos_validos=comandos_validos,
+                             total_comandos_validos=len(comandos_validos),
+                             ultimo_comando=session.get('ultimo_comando', None))
+    
     @app.route('/glc/arbol/<comando>')
     def mostrar_arbol_comando_especifico(comando):
         """Muestra el árbol para un comando específico"""
@@ -224,6 +238,190 @@ def integrar_rutas_glc(app):
         }
 
         return jsonify(gramatica)
+
+    @app.route('/glc/construir_automata', methods=['POST'])
+    def construir_automata():
+        """Construye el autómata dinámicamente basado en comandos válidos"""
+        try:
+            inicializar_historial()
+            
+            # Obtener comandos válidos del historial
+            historial = session.get('historial_comandos', [])
+            comandos_validos = [cmd for cmd in historial if cmd.get('valido', False)]
+            
+            # Construir estructura del autómata dinámico
+            automata_dinamico = _construir_estructura_automata(comandos_validos)
+            
+            return jsonify({
+                'success': True,
+                'automata': automata_dinamico,
+                'total_comandos': len(comandos_validos),
+                'mensaje': f'Autómata construido con {len(comandos_validos)} comandos válidos'
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': f'Error al construir autómata: {str(e)}'
+            }), 500
+
+    def _construir_estructura_automata(comandos_validos):
+        """Construye la estructura del autómata basado en comandos válidos"""
+        nodes = []
+        edges = []
+        node_id = 0
+        
+        # Estado inicial
+        nodes.append({
+            'id': node_id,
+            'label': 'q₀\n(Inicio)',
+            'color': '#2ECC71',
+            'font': {'size': 16, 'color': '#1A1A1A'},
+            'shape': 'circle',
+            'title': 'Estado inicial del autómata',
+            'tipo': 'inicial'
+        })
+        
+        estado_actual = node_id
+        node_id += 1
+        
+        # Procesar cada comando válido secuencialmente
+        for i, comando_info in enumerate(comandos_validos):
+            comando = comando_info.get('comando', '').lower().strip()
+            tokens = comando_info.get('tokens', [])
+            timestamp = comando_info.get('timestamp', '')
+            
+            # Determinar tipo de comando y crear nodo correspondiente
+            nuevo_estado = _crear_nodo_por_comando(comando, tokens, node_id, timestamp)
+            nodes.append(nuevo_estado)
+            
+            # Crear transición desde el estado actual
+            edge = {
+                'from': estado_actual,
+                'to': node_id,
+                'label': comando,
+                'arrows': 'to',
+                'color': {'color': _obtener_color_por_comando(comando)},
+                'width': 2,
+                'font': {'size': 12, 'align': 'middle'},
+                'title': f'Transición #{i+1}: {comando} ({timestamp})'
+            }
+            edges.append(edge)
+            
+            estado_actual = node_id
+            node_id += 1
+        
+        # Si hay comandos, crear estado final
+        if comandos_validos:
+            estado_final = {
+                'id': node_id,
+                'label': f'q{node_id}\n(Final)',
+                'color': '#E74C3C',
+                'font': {'size': 16, 'color': '#1A1A1A'},
+                'shape': 'doublecircle',
+                'title': f'Estado final - Procesados {len(comandos_validos)} comandos',
+                'tipo': 'final'
+            }
+            nodes.append(estado_final)
+            
+            # Transición al estado final
+            edges.append({
+                'from': estado_actual,
+                'to': node_id,
+                'label': 'λ (fin)',
+                'arrows': 'to',
+                'color': {'color': '#BDC3C7'},
+                'width': 1,
+                'dashes': True,
+                'font': {'size': 10, 'align': 'middle'}
+            })
+        
+        return {
+            'nodes': nodes,
+            'edges': edges,
+            'stats': {
+                'total_nodos': len(nodes),
+                'total_transiciones': len(edges),
+                'comandos_procesados': len(comandos_validos)
+            }
+        }
+
+    def _crear_nodo_por_comando(comando, tokens, node_id, timestamp):
+        """Crea un nodo específico según el tipo de comando"""
+        # Clasificar comando por categoría
+        if comando in ['izquierda', 'derecha', 'arriba', 'abajo']:
+            return {
+                'id': node_id,
+                'label': f'q{node_id}\n({comando})',
+                'color': '#3498DB',
+                'font': {'size': 14, 'color': '#1A1A1A'},
+                'shape': 'circle',
+                'title': f'Movimiento: {comando}\nTiempo: {timestamp}',
+                'tipo': 'movimiento',
+                'comando': comando
+            }
+        elif 'puerta' in comando:
+            puerta = comando.split()[-1] if len(comando.split()) > 1 else 'X'
+            return {
+                'id': node_id,
+                'label': f'q{node_id}\n(Puerta {puerta.upper()})',
+                'color': '#9B59B6',
+                'font': {'size': 14, 'color': '#1A1A1A'},
+                'shape': 'hexagon',
+                'title': f'Selección de puerta: {puerta.upper()}\nTiempo: {timestamp}',
+                'tipo': 'puerta',
+                'comando': comando
+            }
+        elif comando in ['cambiar', 'mantener']:
+            return {
+                'id': node_id,
+                'label': f'q{node_id}\n({comando})',
+                'color': '#F39C12',
+                'font': {'size': 14, 'color': '#1A1A1A'},
+                'shape': 'diamond',
+                'title': f'Acción Monty Hall: {comando}\nTiempo: {timestamp}',
+                'tipo': 'accion',
+                'comando': comando
+            }
+        elif 'nueva' in comando or 'partida' in comando:
+            return {
+                'id': node_id,
+                'label': f'q{node_id}\n(Reset)',
+                'color': '#E67E22',
+                'font': {'size': 14, 'color': '#1A1A1A'},
+                'shape': 'star',
+                'title': f'Nueva partida\nTiempo: {timestamp}',
+                'tipo': 'control',
+                'comando': comando
+            }
+        else:
+            return {
+                'id': node_id,
+                'label': f'q{node_id}\n({comando[:8]}...)',
+                'color': '#95A5A6',
+                'font': {'size': 12, 'color': '#1A1A1A'},
+                'shape': 'ellipse',
+                'title': f'Comando: {comando}\nTiempo: {timestamp}',
+                'tipo': 'generico',
+                'comando': comando
+            }
+
+    def _obtener_color_por_comando(comando):
+        """Obtiene color de transición según el comando"""
+        colores = {
+            'izquierda': '#1ABC9C',
+            'derecha': '#1ABC9C', 
+            'arriba': '#1ABC9C',
+            'abajo': '#1ABC9C',
+            'puerta a': '#9B59B6',
+            'puerta b': '#9B59B6',
+            'puerta c': '#9B59B6',
+            'cambiar': '#F39C12',
+            'mantener': '#F39C12',
+            'nueva partida': '#E67E22',
+            'nueva': '#E67E22'
+        }
+        return colores.get(comando, '#2B7CE9')
 
     @app.route('/glc/reset_nueva_partida', methods=['POST'])
     def reset_nueva_partida():
