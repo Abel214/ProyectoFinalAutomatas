@@ -90,7 +90,7 @@ class AnalizadorGLC:
     def tokenizar(self, cadena):
         # Limpiar y normalizar la cadena
         cadena = cadena.strip().lower()
-        
+        cadena = re.sub(r'[^\w\s]', '', cadena.lower())
         # Patrón para tokenizar comandos de voz
         # Buscar palabras completas separadas por espacios
         palabras = cadena.split()

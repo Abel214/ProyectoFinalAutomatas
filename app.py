@@ -1,13 +1,17 @@
 from flask import Flask, render_template
 import os
+import sys
+from datetime import datetime
 
-# Importar la integración GLC
+from integracionAutomata import integrar_rutas
+
+sys.path.append(os.path.join(os.path.dirname(__file__), 'backend', 'glc'))
 from integracion_glc import integrar_rutas_glc
 
 # Crear la aplicación Flask con rutas personalizadas
 app = Flask(__name__,
-            template_folder='frontend/templates',  # Especifica la carpeta de templates
-            static_folder='frontend/static')       # También para archivos estáticos si los tienes
+            template_folder='frontend/templates', 
+            static_folder='frontend/static')      
 
 # Configuración básica
 app.config['SECRET_KEY'] = 'tu-clave-secreta-aqui'
@@ -27,8 +31,7 @@ def laberinto():
 
 # Integrar las rutas de GLC
 integrar_rutas_glc(app)
-
-
+integrar_rutas(app)
 # Manejo de errores 404
 @app.errorhandler(404)
 def page_not_found(error):
