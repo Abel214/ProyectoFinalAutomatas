@@ -157,9 +157,7 @@
         <a href="{{ url_for('index') }}" class="active"> Inicio</a>
         <a href="{{ url_for('laberinto') }}">Juego</a>
         <a href="{{ url_for('mostrar_arbol_voz') }}">GLC</a>
-        <a href="{{ url_for('mostrar_arbol_voz_Automata') }}">Automata</a>
-        <a href="{{ url_for('mostrar_automata_dinamico') }}" title="Autómata construido dinámicamente">🤖 Dinámico</a>
-        <a href="">Acerca De</a>
+        <a href="{{ url_for('mostrar_automata_dinamico') }}" title="Autómata construido dinámicamente">Autómata</a>
     </nav>
     </header>
     <section>
@@ -202,13 +200,7 @@
                 <p><strong>Monty Hall:</strong> puerta a/b/c, cambiar, mantener, cerrar, reiniciar, otra vez</p>
                 <p><strong>Juego:</strong> nueva partida</p>
                 
-                <div style="margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 5px; border-left: 4px solid #2196f3;">
-                    <strong>🤖 ¡Nuevo!</strong> 
-                    <a href="{{ url_for('mostrar_automata_dinamico') }}" style="color: #1976d2; text-decoration: none; font-weight: bold;">
-                        Ver Autómata Dinámico →
-                    </a>
-                    <br><small>Visualiza un autómata que se construye automáticamente con tus comandos válidos</small>
-                </div>
+                
             </div>
 
             <div class="info-card">
@@ -230,11 +222,9 @@
         <div class="controls">
             <button class="btn" onclick="location.reload()">🔄 Recargar</button>
             <button class="btn" onclick="window.close()">❌ Cerrar</button>
-            <button class="btn" onclick="exportarArbol()">💾 Exportar</button>
-            <button class="btn" onclick="mostrarEstadisticas()">📊 Estadísticas</button>
             <button class="btn" onclick="mostrarSelectorHistorial()">📝 Historial</button>
-            <button class="btn" onclick="mostrarHistorialVisual()" style="background: linear-gradient(45deg, #667eea, #764ba2);">🌳 Ver Historial Visual</button>
-           <button class="btn" onclick="window.location.href='automata.html'">
+            <button class="btn" onclick="mostrarHistorialVisual()">🎯 Ver Arbol Actual</button>
+           <button class="btn" onclick="window.location.href='{{ url_for('mostrar_automata_dinamico') }}'">
             Ir al Autómata
             </button>
         </div>

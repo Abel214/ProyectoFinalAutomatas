@@ -222,7 +222,7 @@ function abrirPuertaConAnimacion(doorIndex) {
         doorImg.src = '/static/resources/Cabra.gif';
         doorImg.style.borderColor = "#f44336";
 
-        messageDiv.innerHTML = `<div style="color: #333; font-weight: bold;">El presentador abrió la puerta ${door} y mostró una cabra.<br>¿Deseas cambiar de puerta?</div>`;
+        messageDiv.innerHTML = `<div style="color: #333; font-weight: bold;">El presentador abrió la puerta ${door} y mostró un muro.<br>¿Deseas cambiar de puerta?</div>`;
 
         // Mostrar botones de cambio
         mostrarBotonesCambio();
@@ -324,13 +324,13 @@ function finalizarMontyHall(cambiar) {
 
     if (ganaste) {
         presenter.src = '/static/resources/Presentador1.jpeg';
-        messageDiv.innerHTML = `<div style="color: #4CAF50; font-weight: bold; font-size: 1.3em;">¡Felicidades! Ganaste el carro en la puerta ${montyHallGame.doors[finalDoor]}.<br>Puedes continuar en el laberinto.</div>`;
+        messageDiv.innerHTML = `<div style="color: #4CAF50; font-weight: bold; font-size: 1.3em;">¡Felicidades! Pasaste de ronda en la puerta ${montyHallGame.doors[finalDoor]}.<br>Puedes continuar en el laberinto.</div>`;
         montyHallGame.ganadas++;
         audioWin.currentTime = 0;
         audioWin.play();
     } else {
         presenter.src = '/static/resources/Presentador2.jpeg';
-        messageDiv.innerHTML = `<div style="color: #f44336; font-weight: bold; font-size: 1.3em;">Lo siento, encontraste una cabra en la puerta ${montyHallGame.doors[finalDoor]}.<br>Regresarás al inicio del laberinto.</div>`;
+        messageDiv.innerHTML = `<div style="color: #f44336; font-weight: bold; font-size: 1.3em;">Lo siento, encontraste un muro en la puerta ${montyHallGame.doors[finalDoor]}.<br>Regresarás al inicio del laberinto.</div>`;
         montyHallGame.perdidas++;
         audioFail.currentTime = 0;
         audioFail.play();

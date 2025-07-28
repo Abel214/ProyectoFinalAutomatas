@@ -10,8 +10,8 @@ from integracion_glc import integrar_rutas_glc
 
 # Crear la aplicación Flask con rutas personalizadas
 app = Flask(__name__,
-            template_folder='frontend/templates',  # Especifica la carpeta de templates
-            static_folder='frontend/static')       # También para archivos estáticos si los tienes
+            template_folder='frontend/templates', 
+            static_folder='frontend/static')      
 
 # Configuración básica
 app.config['SECRET_KEY'] = 'tu-clave-secreta-aqui'

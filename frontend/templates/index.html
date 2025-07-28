@@ -7,19 +7,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <!-- Cambio importante: usar url_for para el CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
-    <title>Portfolio Website</title>
+    <title>Proyecto Final</title>
 </head>
 <body>
 <header>
     <a href="#" class="logo">AUTOMATAS</a>
 
     <nav>
-        <!-- Cambio importante: usar url_for para las rutas -->
+        <nav>
         <a href="{{ url_for('index') }}" class="active"> Inicio</a>
         <a href="{{ url_for('laberinto') }}">Juego</a>
         <a href="{{ url_for('mostrar_arbol_voz') }}">GLC</a>
-        <a href="{{ url_for('mostrar_arbol_voz_Automata') }}">Automata</a>
-        <a href="{{ url_for('mostrar_automata_dinamico') }}" title="Autómata construido dinámicamente">🤖 Dinámico</a>
+        <a href="{{ url_for('mostrar_automata_dinamico') }}" title="Autómata construido dinámicamente">Autómata</a>
+    </nav>
     </nav>
 </header>
 <section class="home">

@@ -8,124 +8,56 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style/montyhall.css') }}">
     
     <title>Juego Monty Hall</title>
-    <style>
-        .monty-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-        .doors {
-            display: flex;
-            gap: 40px;
-            margin: 30px 0;
-        }
-        .door {
-            cursor: pointer;
-            transition: transform 0.2s;
-            height: 266px;
-            width: 133px;
-            object-fit: contain;
-        }
-        /* Botones de cambio centrados y separados */
-        .change-btns {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 18px;
-        }
-        .door.selected {
-            transform: scale(1.1);
-            border: 2px solid #007bff;
-        }
-        .door-label {
-            text-align: center;
-            font-weight: bold;
-            margin-top: 8px;
-        }
-        .presenter-img {
-            width: 100px;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-        .stats {
-            margin-top: 20px;
-            font-size: 1.1em;
-        }
-        .btn-monty {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 1em;
-            background: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        /* Estilos del laberinto */
-        #maze {
-            display: grid;
-            grid-template-columns: repeat(10, 40px);
-            grid-template-rows: repeat(10, 40px);
-            gap: 2px;
-            margin-top: 20px;
-        }
-        .cell {
-            width: 40px;
-            height: 40px;
-            background: #fff;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-        .wall {
-            background: #222;
-        }
-        .start {
-            background: #4caf50;
-        }
-        .end {
-            background: #2196f3;
-        }
-        .particle {
-            background: red;
-            border-radius: 50%;
-        }
-    </style>
+ 
 </head>
 <body>
     <header>
         <a href="#" class="logo">AUTOMATAS</a>
         
-        <nav>
-            <!-- Cambio: usar url_for para las rutas de navegación -->
-            <a href="{{ url_for('index') }}" class="active"> Inicio</a>
-            <a href="{{ url_for('laberinto') }}" >Juego</a>
-            <a href="{{ url_for('mostrar_arbol_voz') }}">GLC</a>
-            <a href="{{ url_for('mostrar_arbol_voz_Automata') }}">Automata</a>
-
-        </nav>
+       <nav>
+        <!-- Cambio importante: usar url_for para las rutas -->
+        <a href="{{ url_for('index') }}" class="active"> Inicio</a>
+        <a href="{{ url_for('laberinto') }}">Juego</a>
+        <a href="{{ url_for('mostrar_arbol_voz') }}">GLC</a>
+        <a href="{{ url_for('mostrar_automata_dinamico') }}" title="Autómata construido dinámicamente">Autómata</a>
+    </nav>
     </header>
 
     <!-- Contenedor del laberinto reemplazando el monty-container -->
     <div class="monty-container">
-        <h2>Laberinto: Mueve la partícula roja con las flechas</h2>
+        <h2>Laberinto: Mueve la partícula roja con la voz</h2>
+        
         <div id="maze"></div>
         <p id="status"></p>
-        <button id="new-game" class="btn-monty">Nueva partida</button>
+        <h2>Reconocimiento de voz activo. Di: "izquierda", "derecha", "arriba", "abajo", "puerta a/b/c", "cambiar", "mantener", "cerrar", "reiniciar"</h2>
+        <div class="controls">
+            <button id="new-game" class="btn">Nueva partida</button>
+            <button id="go-to-automata" class="btn">
+                Ir al Autómata
+            </button>
+        </div>
+        
+    </div>
 
-        </button>
-        <button
-            id="view-glc-tree"
-            class="btn-monty"
-            style="background: #667eea; margin-left: 10px;"
-            onclick="window.open('{{ url_for('mostrar_arbol_voz_Automata') }}', '_blank')"
-        >
-            Ver Automata
-        </button>
+    <!-- Modal de advertencia -->
+    <div id="warning-modal" class="warning-modal">
+        <div class="warning-content">
+            <div class="warning-icon">⚠️</div>
+            <div class="warning-title">¡Advertencia!</div>
+            <div class="warning-message">
+                Al ir al Autómata se reiniciará todo el progreso actual del juego, incluyendo tu posición en el laberinto y el historial de comandos.
+                <br><br>
+                ¿Deseas continuar con esta acción?
+            </div>
+            <div class="warning-buttons">
+                <button id="confirm-continue" class="btn-warning btn-continue">
+                    Sí, continuar
+                </button>
+                <button id="cancel-action" class="btn-warning btn-cancel">
+                    Cancelar
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal para Monty Hall -->
@@ -303,6 +235,69 @@
             document.getElementById("status").textContent = "";
         });
 
+        // Función para mostrar el modal de advertencia
+        function showWarningModal() {
+            document.getElementById("warning-modal").style.display = "flex";
+        }
+
+        // Función para ocultar el modal de advertencia
+        function hideWarningModal() {
+            document.getElementById("warning-modal").style.display = "none";
+        }
+
+        // Función para ir al autómata (después de confirmar)
+        function goToAutomata() {
+            // Resetear historial de comandos GLC antes de ir al autómata
+            fetch('/glc/reset_nueva_partida', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('🔄 Historial GLC reseteado antes de ir al autómata');
+                }
+                // Redirigir al autómata
+                window.location.href = "{{ url_for('mostrar_arbol_voz_Automata') }}";
+            })
+            .catch(error => {
+                console.error('Error al resetear historial GLC:', error);
+                // Redirigir de todas formas
+                window.location.href = "{{ url_for('mostrar_arbol_voz_Automata') }}";
+            });
+        }
+
+        // Event listeners para el botón "Ir al Autómata" y el modal
+        document.getElementById("go-to-automata").addEventListener("click", (e) => {
+            e.preventDefault();
+            showWarningModal();
+        });
+
+        document.getElementById("confirm-continue").addEventListener("click", () => {
+            hideWarningModal();
+            goToAutomata();
+        });
+
+        document.getElementById("cancel-action").addEventListener("click", () => {
+            hideWarningModal();
+        });
+
+        // Cerrar modal si se hace clic fuera de él
+        document.getElementById("warning-modal").addEventListener("click", (e) => {
+            if (e.target === document.getElementById("warning-modal")) {
+                hideWarningModal();
+            }
+        });
+
+        // Cerrar modal con la tecla Escape
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && document.getElementById("warning-modal").style.display === "flex") {
+                hideWarningModal();
+            }
+        });
+
         // Reconocimiento de voz
         window.SpeechRecognition =
             window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -374,7 +369,7 @@
 
             recognition.start();
             document.getElementById("status").textContent =
-                'Reconocimiento de voz activo. Di: "izquierda", "derecha", "arriba", "abajo", "puerta a/b/c", "cambiar", "mantener", "cerrar", "reiniciar".';
+                ''
         } else {
             document.getElementById("status").textContent =
                 "Reconocimiento de voz no soportado en este navegador.";
