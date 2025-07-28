@@ -260,12 +260,12 @@
                     console.log('🔄 Historial GLC reseteado antes de ir al autómata');
                 }
                 // Redirigir al autómata
-                window.location.href = "{{ url_for('mostrar_arbol_voz_Automata') }}";
+                window.location.href = "{{ url_for('mostrar_automata_dinamico') }}";
             })
             .catch(error => {
                 console.error('Error al resetear historial GLC:', error);
                 // Redirigir de todas formas
-                window.location.href = "{{ url_for('mostrar_arbol_voz_Automata') }}";
+                window.location.href = "{{ url_for('mostrar_automata_dinamico') }}";
             });
         }
 
